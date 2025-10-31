@@ -32,7 +32,7 @@
 # emscripten how to compile WebGPU functions. This component is called a port
 # and we get it from Dawn's repository.
 
-set(EMDAWNWEBGPU_VERSION "v20250517.163311" CACHE STRING "\
+set(EMDAWNWEBGPU_VERSION "v20251030.221451" CACHE STRING "\
 	Version of the emdawnwebgpu to use. Must correspond to a valid tag on \
 	EMDAWNWEBGPU_MIRROR. \
 	Warning: The webgpu.hpp file provided in include/ may not be compatible with other \
