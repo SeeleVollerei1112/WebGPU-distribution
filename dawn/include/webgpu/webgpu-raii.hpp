@@ -137,6 +137,7 @@ HANDLE(SharedBufferMemory);
 HANDLE(SharedFence);
 HANDLE(SharedTextureMemory);
 HANDLE(Surface);
+HANDLE(TexelBufferView);
 HANDLE(Texture);
 HANDLE(TextureView);
 
