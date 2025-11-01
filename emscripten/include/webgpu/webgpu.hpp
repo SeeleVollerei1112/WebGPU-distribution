@@ -42,6 +42,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <string_view>
 
 #if __EMSCRIPTEN__
 #include <emscripten.h>
@@ -163,23 +164,10 @@ private:
 
 
 // Other type aliases
-using Flags = uint32_t;
+using Flags = uint64_t;
 using Bool = uint32_t;
-using BufferUsageFlags = WGPUFlags;
-using ColorWriteMaskFlags = WGPUFlags;
-using MapModeFlags = WGPUFlags;
-using ShaderStageFlags = WGPUFlags;
-using TextureUsageFlags = WGPUFlags;
 
 // Enumerations
-ENUM(WGSLFeatureName)
-	ENUM_ENTRY(Undefined, WGPUWGSLFeatureName_Undefined)
-	ENUM_ENTRY(ReadonlyAndReadwriteStorageTextures, WGPUWGSLFeatureName_ReadonlyAndReadwriteStorageTextures)
-	ENUM_ENTRY(Packed4x8IntegerDotProduct, WGPUWGSLFeatureName_Packed4x8IntegerDotProduct)
-	ENUM_ENTRY(UnrestrictedPointerParameters, WGPUWGSLFeatureName_UnrestrictedPointerParameters)
-	ENUM_ENTRY(PointerCompositeAccess, WGPUWGSLFeatureName_PointerCompositeAccess)
-	ENUM_ENTRY(Force32, WGPUWGSLFeatureName_Force32)
-END
 ENUM(AdapterType)
 	ENUM_ENTRY(DiscreteGPU, WGPUAdapterType_DiscreteGPU)
 	ENUM_ENTRY(IntegratedGPU, WGPUAdapterType_IntegratedGPU)
@@ -221,6 +209,10 @@ ENUM(BlendFactor)
 	ENUM_ENTRY(SrcAlphaSaturated, WGPUBlendFactor_SrcAlphaSaturated)
 	ENUM_ENTRY(Constant, WGPUBlendFactor_Constant)
 	ENUM_ENTRY(OneMinusConstant, WGPUBlendFactor_OneMinusConstant)
+	ENUM_ENTRY(Src1, WGPUBlendFactor_Src1)
+	ENUM_ENTRY(OneMinusSrc1, WGPUBlendFactor_OneMinusSrc1)
+	ENUM_ENTRY(Src1Alpha, WGPUBlendFactor_Src1Alpha)
+	ENUM_ENTRY(OneMinusSrc1Alpha, WGPUBlendFactor_OneMinusSrc1Alpha)
 	ENUM_ENTRY(Force32, WGPUBlendFactor_Force32)
 END
 ENUM(BlendOperation)
@@ -233,23 +225,12 @@ ENUM(BlendOperation)
 	ENUM_ENTRY(Force32, WGPUBlendOperation_Force32)
 END
 ENUM(BufferBindingType)
+	ENUM_ENTRY(BindingNotUsed, WGPUBufferBindingType_BindingNotUsed)
 	ENUM_ENTRY(Undefined, WGPUBufferBindingType_Undefined)
 	ENUM_ENTRY(Uniform, WGPUBufferBindingType_Uniform)
 	ENUM_ENTRY(Storage, WGPUBufferBindingType_Storage)
 	ENUM_ENTRY(ReadOnlyStorage, WGPUBufferBindingType_ReadOnlyStorage)
 	ENUM_ENTRY(Force32, WGPUBufferBindingType_Force32)
-END
-ENUM(BufferMapAsyncStatus)
-	ENUM_ENTRY(Success, WGPUBufferMapAsyncStatus_Success)
-	ENUM_ENTRY(ValidationError, WGPUBufferMapAsyncStatus_ValidationError)
-	ENUM_ENTRY(Unknown, WGPUBufferMapAsyncStatus_Unknown)
-	ENUM_ENTRY(DeviceLost, WGPUBufferMapAsyncStatus_DeviceLost)
-	ENUM_ENTRY(DestroyedBeforeCallback, WGPUBufferMapAsyncStatus_DestroyedBeforeCallback)
-	ENUM_ENTRY(UnmappedBeforeCallback, WGPUBufferMapAsyncStatus_UnmappedBeforeCallback)
-	ENUM_ENTRY(MappingAlreadyPending, WGPUBufferMapAsyncStatus_MappingAlreadyPending)
-	ENUM_ENTRY(OffsetOutOfRange, WGPUBufferMapAsyncStatus_OffsetOutOfRange)
-	ENUM_ENTRY(SizeOutOfRange, WGPUBufferMapAsyncStatus_SizeOutOfRange)
-	ENUM_ENTRY(Force32, WGPUBufferMapAsyncStatus_Force32)
 END
 ENUM(BufferMapState)
 	ENUM_ENTRY(Unmapped, WGPUBufferMapState_Unmapped)
@@ -277,9 +258,7 @@ ENUM(CompareFunction)
 END
 ENUM(CompilationInfoRequestStatus)
 	ENUM_ENTRY(Success, WGPUCompilationInfoRequestStatus_Success)
-	ENUM_ENTRY(Error, WGPUCompilationInfoRequestStatus_Error)
-	ENUM_ENTRY(DeviceLost, WGPUCompilationInfoRequestStatus_DeviceLost)
-	ENUM_ENTRY(Unknown, WGPUCompilationInfoRequestStatus_Unknown)
+	ENUM_ENTRY(CallbackCancelled, WGPUCompilationInfoRequestStatus_CallbackCancelled)
 	ENUM_ENTRY(Force32, WGPUCompilationInfoRequestStatus_Force32)
 END
 ENUM(CompilationMessageType)
@@ -287,6 +266,16 @@ ENUM(CompilationMessageType)
 	ENUM_ENTRY(Warning, WGPUCompilationMessageType_Warning)
 	ENUM_ENTRY(Info, WGPUCompilationMessageType_Info)
 	ENUM_ENTRY(Force32, WGPUCompilationMessageType_Force32)
+END
+ENUM(ComponentSwizzle)
+	ENUM_ENTRY(Undefined, WGPUComponentSwizzle_Undefined)
+	ENUM_ENTRY(Zero, WGPUComponentSwizzle_Zero)
+	ENUM_ENTRY(One, WGPUComponentSwizzle_One)
+	ENUM_ENTRY(R, WGPUComponentSwizzle_R)
+	ENUM_ENTRY(G, WGPUComponentSwizzle_G)
+	ENUM_ENTRY(B, WGPUComponentSwizzle_B)
+	ENUM_ENTRY(A, WGPUComponentSwizzle_A)
+	ENUM_ENTRY(Force32, WGPUComponentSwizzle_Force32)
 END
 ENUM(CompositeAlphaMode)
 	ENUM_ENTRY(Auto, WGPUCompositeAlphaMode_Auto)
@@ -298,11 +287,9 @@ ENUM(CompositeAlphaMode)
 END
 ENUM(CreatePipelineAsyncStatus)
 	ENUM_ENTRY(Success, WGPUCreatePipelineAsyncStatus_Success)
+	ENUM_ENTRY(CallbackCancelled, WGPUCreatePipelineAsyncStatus_CallbackCancelled)
 	ENUM_ENTRY(ValidationError, WGPUCreatePipelineAsyncStatus_ValidationError)
 	ENUM_ENTRY(InternalError, WGPUCreatePipelineAsyncStatus_InternalError)
-	ENUM_ENTRY(DeviceLost, WGPUCreatePipelineAsyncStatus_DeviceLost)
-	ENUM_ENTRY(DeviceDestroyed, WGPUCreatePipelineAsyncStatus_DeviceDestroyed)
-	ENUM_ENTRY(Unknown, WGPUCreatePipelineAsyncStatus_Unknown)
 	ENUM_ENTRY(Force32, WGPUCreatePipelineAsyncStatus_Force32)
 END
 ENUM(CullMode)
@@ -313,9 +300,10 @@ ENUM(CullMode)
 	ENUM_ENTRY(Force32, WGPUCullMode_Force32)
 END
 ENUM(DeviceLostReason)
-	ENUM_ENTRY(Undefined, WGPUDeviceLostReason_Undefined)
 	ENUM_ENTRY(Unknown, WGPUDeviceLostReason_Unknown)
 	ENUM_ENTRY(Destroyed, WGPUDeviceLostReason_Destroyed)
+	ENUM_ENTRY(CallbackCancelled, WGPUDeviceLostReason_CallbackCancelled)
+	ENUM_ENTRY(FailedCreation, WGPUDeviceLostReason_FailedCreation)
 	ENUM_ENTRY(Force32, WGPUDeviceLostReason_Force32)
 END
 ENUM(ErrorFilter)
@@ -330,22 +318,37 @@ ENUM(ErrorType)
 	ENUM_ENTRY(OutOfMemory, WGPUErrorType_OutOfMemory)
 	ENUM_ENTRY(Internal, WGPUErrorType_Internal)
 	ENUM_ENTRY(Unknown, WGPUErrorType_Unknown)
-	ENUM_ENTRY(DeviceLost, WGPUErrorType_DeviceLost)
 	ENUM_ENTRY(Force32, WGPUErrorType_Force32)
 END
+ENUM(FeatureLevel)
+	ENUM_ENTRY(Undefined, WGPUFeatureLevel_Undefined)
+	ENUM_ENTRY(Compatibility, WGPUFeatureLevel_Compatibility)
+	ENUM_ENTRY(Core, WGPUFeatureLevel_Core)
+	ENUM_ENTRY(Force32, WGPUFeatureLevel_Force32)
+END
 ENUM(FeatureName)
-	ENUM_ENTRY(Undefined, WGPUFeatureName_Undefined)
+	ENUM_ENTRY(CoreFeaturesAndLimits, WGPUFeatureName_CoreFeaturesAndLimits)
 	ENUM_ENTRY(DepthClipControl, WGPUFeatureName_DepthClipControl)
 	ENUM_ENTRY(Depth32FloatStencil8, WGPUFeatureName_Depth32FloatStencil8)
-	ENUM_ENTRY(TimestampQuery, WGPUFeatureName_TimestampQuery)
 	ENUM_ENTRY(TextureCompressionBC, WGPUFeatureName_TextureCompressionBC)
+	ENUM_ENTRY(TextureCompressionBCSliced3D, WGPUFeatureName_TextureCompressionBCSliced3D)
 	ENUM_ENTRY(TextureCompressionETC2, WGPUFeatureName_TextureCompressionETC2)
 	ENUM_ENTRY(TextureCompressionASTC, WGPUFeatureName_TextureCompressionASTC)
+	ENUM_ENTRY(TextureCompressionASTCSliced3D, WGPUFeatureName_TextureCompressionASTCSliced3D)
+	ENUM_ENTRY(TimestampQuery, WGPUFeatureName_TimestampQuery)
 	ENUM_ENTRY(IndirectFirstInstance, WGPUFeatureName_IndirectFirstInstance)
 	ENUM_ENTRY(ShaderF16, WGPUFeatureName_ShaderF16)
 	ENUM_ENTRY(RG11B10UfloatRenderable, WGPUFeatureName_RG11B10UfloatRenderable)
 	ENUM_ENTRY(BGRA8UnormStorage, WGPUFeatureName_BGRA8UnormStorage)
 	ENUM_ENTRY(Float32Filterable, WGPUFeatureName_Float32Filterable)
+	ENUM_ENTRY(Float32Blendable, WGPUFeatureName_Float32Blendable)
+	ENUM_ENTRY(ClipDistances, WGPUFeatureName_ClipDistances)
+	ENUM_ENTRY(DualSourceBlending, WGPUFeatureName_DualSourceBlending)
+	ENUM_ENTRY(Subgroups, WGPUFeatureName_Subgroups)
+	ENUM_ENTRY(TextureFormatsTier1, WGPUFeatureName_TextureFormatsTier1)
+	ENUM_ENTRY(TextureFormatsTier2, WGPUFeatureName_TextureFormatsTier2)
+	ENUM_ENTRY(PrimitiveIndex, WGPUFeatureName_PrimitiveIndex)
+	ENUM_ENTRY(TextureComponentSwizzle, WGPUFeatureName_TextureComponentSwizzle)
 	ENUM_ENTRY(Force32, WGPUFeatureName_Force32)
 END
 ENUM(FilterMode)
@@ -366,11 +369,24 @@ ENUM(IndexFormat)
 	ENUM_ENTRY(Uint32, WGPUIndexFormat_Uint32)
 	ENUM_ENTRY(Force32, WGPUIndexFormat_Force32)
 END
+ENUM(InstanceFeatureName)
+	ENUM_ENTRY(TimedWaitAny, WGPUInstanceFeatureName_TimedWaitAny)
+	ENUM_ENTRY(ShaderSourceSPIRV, WGPUInstanceFeatureName_ShaderSourceSPIRV)
+	ENUM_ENTRY(MultipleDevicesPerAdapter, WGPUInstanceFeatureName_MultipleDevicesPerAdapter)
+	ENUM_ENTRY(Force32, WGPUInstanceFeatureName_Force32)
+END
 ENUM(LoadOp)
 	ENUM_ENTRY(Undefined, WGPULoadOp_Undefined)
-	ENUM_ENTRY(Clear, WGPULoadOp_Clear)
 	ENUM_ENTRY(Load, WGPULoadOp_Load)
+	ENUM_ENTRY(Clear, WGPULoadOp_Clear)
 	ENUM_ENTRY(Force32, WGPULoadOp_Force32)
+END
+ENUM(MapAsyncStatus)
+	ENUM_ENTRY(Success, WGPUMapAsyncStatus_Success)
+	ENUM_ENTRY(CallbackCancelled, WGPUMapAsyncStatus_CallbackCancelled)
+	ENUM_ENTRY(Error, WGPUMapAsyncStatus_Error)
+	ENUM_ENTRY(Aborted, WGPUMapAsyncStatus_Aborted)
+	ENUM_ENTRY(Force32, WGPUMapAsyncStatus_Force32)
 END
 ENUM(MipmapFilterMode)
 	ENUM_ENTRY(Undefined, WGPUMipmapFilterMode_Undefined)
@@ -378,14 +394,33 @@ ENUM(MipmapFilterMode)
 	ENUM_ENTRY(Linear, WGPUMipmapFilterMode_Linear)
 	ENUM_ENTRY(Force32, WGPUMipmapFilterMode_Force32)
 END
+ENUM(OptionalBool)
+	ENUM_ENTRY(False, WGPUOptionalBool_False)
+	ENUM_ENTRY(True, WGPUOptionalBool_True)
+	ENUM_ENTRY(Undefined, WGPUOptionalBool_Undefined)
+	ENUM_ENTRY(Force32, WGPUOptionalBool_Force32)
+END
+ENUM(PopErrorScopeStatus)
+	ENUM_ENTRY(Success, WGPUPopErrorScopeStatus_Success)
+	ENUM_ENTRY(CallbackCancelled, WGPUPopErrorScopeStatus_CallbackCancelled)
+	ENUM_ENTRY(Error, WGPUPopErrorScopeStatus_Error)
+	ENUM_ENTRY(Force32, WGPUPopErrorScopeStatus_Force32)
+END
 ENUM(PowerPreference)
 	ENUM_ENTRY(Undefined, WGPUPowerPreference_Undefined)
 	ENUM_ENTRY(LowPower, WGPUPowerPreference_LowPower)
 	ENUM_ENTRY(HighPerformance, WGPUPowerPreference_HighPerformance)
 	ENUM_ENTRY(Force32, WGPUPowerPreference_Force32)
 END
+ENUM(PredefinedColorSpace)
+	ENUM_ENTRY(SRGB, WGPUPredefinedColorSpace_SRGB)
+	ENUM_ENTRY(DisplayP3, WGPUPredefinedColorSpace_DisplayP3)
+	ENUM_ENTRY(Force32, WGPUPredefinedColorSpace_Force32)
+END
 ENUM(PresentMode)
+	ENUM_ENTRY(Undefined, WGPUPresentMode_Undefined)
 	ENUM_ENTRY(Fifo, WGPUPresentMode_Fifo)
+	ENUM_ENTRY(FifoRelaxed, WGPUPresentMode_FifoRelaxed)
 	ENUM_ENTRY(Immediate, WGPUPresentMode_Immediate)
 	ENUM_ENTRY(Mailbox, WGPUPresentMode_Mailbox)
 	ENUM_ENTRY(Force32, WGPUPresentMode_Force32)
@@ -406,40 +441,35 @@ ENUM(QueryType)
 END
 ENUM(QueueWorkDoneStatus)
 	ENUM_ENTRY(Success, WGPUQueueWorkDoneStatus_Success)
+	ENUM_ENTRY(CallbackCancelled, WGPUQueueWorkDoneStatus_CallbackCancelled)
 	ENUM_ENTRY(Error, WGPUQueueWorkDoneStatus_Error)
-	ENUM_ENTRY(Unknown, WGPUQueueWorkDoneStatus_Unknown)
-	ENUM_ENTRY(DeviceLost, WGPUQueueWorkDoneStatus_DeviceLost)
 	ENUM_ENTRY(Force32, WGPUQueueWorkDoneStatus_Force32)
 END
 ENUM(RequestAdapterStatus)
 	ENUM_ENTRY(Success, WGPURequestAdapterStatus_Success)
+	ENUM_ENTRY(CallbackCancelled, WGPURequestAdapterStatus_CallbackCancelled)
 	ENUM_ENTRY(Unavailable, WGPURequestAdapterStatus_Unavailable)
 	ENUM_ENTRY(Error, WGPURequestAdapterStatus_Error)
-	ENUM_ENTRY(Unknown, WGPURequestAdapterStatus_Unknown)
 	ENUM_ENTRY(Force32, WGPURequestAdapterStatus_Force32)
 END
 ENUM(RequestDeviceStatus)
 	ENUM_ENTRY(Success, WGPURequestDeviceStatus_Success)
+	ENUM_ENTRY(CallbackCancelled, WGPURequestDeviceStatus_CallbackCancelled)
 	ENUM_ENTRY(Error, WGPURequestDeviceStatus_Error)
-	ENUM_ENTRY(Unknown, WGPURequestDeviceStatus_Unknown)
 	ENUM_ENTRY(Force32, WGPURequestDeviceStatus_Force32)
 END
-ENUM(SType)
-	ENUM_ENTRY(Invalid, WGPUSType_Invalid)
-	ENUM_ENTRY(SurfaceDescriptorFromCanvasHTMLSelector, WGPUSType_SurfaceDescriptorFromCanvasHTMLSelector)
-	ENUM_ENTRY(ShaderModuleSPIRVDescriptor, WGPUSType_ShaderModuleSPIRVDescriptor)
-	ENUM_ENTRY(ShaderModuleWGSLDescriptor, WGPUSType_ShaderModuleWGSLDescriptor)
-	ENUM_ENTRY(PrimitiveDepthClipControl, WGPUSType_PrimitiveDepthClipControl)
-	ENUM_ENTRY(RenderPassDescriptorMaxDrawCount, WGPUSType_RenderPassDescriptorMaxDrawCount)
-	ENUM_ENTRY(TextureBindingViewDimensionDescriptor, WGPUSType_TextureBindingViewDimensionDescriptor)
-	ENUM_ENTRY(Force32, WGPUSType_Force32)
-END
 ENUM(SamplerBindingType)
+	ENUM_ENTRY(BindingNotUsed, WGPUSamplerBindingType_BindingNotUsed)
 	ENUM_ENTRY(Undefined, WGPUSamplerBindingType_Undefined)
 	ENUM_ENTRY(Filtering, WGPUSamplerBindingType_Filtering)
 	ENUM_ENTRY(NonFiltering, WGPUSamplerBindingType_NonFiltering)
 	ENUM_ENTRY(Comparison, WGPUSamplerBindingType_Comparison)
 	ENUM_ENTRY(Force32, WGPUSamplerBindingType_Force32)
+END
+ENUM(Status)
+	ENUM_ENTRY(Success, WGPUStatus_Success)
+	ENUM_ENTRY(Error, WGPUStatus_Error)
+	ENUM_ENTRY(Force32, WGPUStatus_Force32)
 END
 ENUM(StencilOperation)
 	ENUM_ENTRY(Undefined, WGPUStencilOperation_Undefined)
@@ -454,6 +484,7 @@ ENUM(StencilOperation)
 	ENUM_ENTRY(Force32, WGPUStencilOperation_Force32)
 END
 ENUM(StorageTextureAccess)
+	ENUM_ENTRY(BindingNotUsed, WGPUStorageTextureAccess_BindingNotUsed)
 	ENUM_ENTRY(Undefined, WGPUStorageTextureAccess_Undefined)
 	ENUM_ENTRY(WriteOnly, WGPUStorageTextureAccess_WriteOnly)
 	ENUM_ENTRY(ReadOnly, WGPUStorageTextureAccess_ReadOnly)
@@ -466,13 +497,27 @@ ENUM(StoreOp)
 	ENUM_ENTRY(Discard, WGPUStoreOp_Discard)
 	ENUM_ENTRY(Force32, WGPUStoreOp_Force32)
 END
+ENUM(SType)
+	ENUM_ENTRY(ShaderSourceSPIRV, WGPUSType_ShaderSourceSPIRV)
+	ENUM_ENTRY(ShaderSourceWGSL, WGPUSType_ShaderSourceWGSL)
+	ENUM_ENTRY(RenderPassMaxDrawCount, WGPUSType_RenderPassMaxDrawCount)
+	ENUM_ENTRY(SurfaceSourceMetalLayer, WGPUSType_SurfaceSourceMetalLayer)
+	ENUM_ENTRY(SurfaceSourceWindowsHWND, WGPUSType_SurfaceSourceWindowsHWND)
+	ENUM_ENTRY(SurfaceSourceXlibWindow, WGPUSType_SurfaceSourceXlibWindow)
+	ENUM_ENTRY(SurfaceSourceWaylandSurface, WGPUSType_SurfaceSourceWaylandSurface)
+	ENUM_ENTRY(SurfaceSourceAndroidNativeWindow, WGPUSType_SurfaceSourceAndroidNativeWindow)
+	ENUM_ENTRY(SurfaceSourceXCBWindow, WGPUSType_SurfaceSourceXCBWindow)
+	ENUM_ENTRY(SurfaceColorManagement, WGPUSType_SurfaceColorManagement)
+	ENUM_ENTRY(RequestAdapterWebXROptions, WGPUSType_RequestAdapterWebXROptions)
+	ENUM_ENTRY(Force32, WGPUSType_Force32)
+END
 ENUM(SurfaceGetCurrentTextureStatus)
-	ENUM_ENTRY(Success, WGPUSurfaceGetCurrentTextureStatus_Success)
+	ENUM_ENTRY(SuccessOptimal, WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal)
+	ENUM_ENTRY(SuccessSuboptimal, WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal)
 	ENUM_ENTRY(Timeout, WGPUSurfaceGetCurrentTextureStatus_Timeout)
 	ENUM_ENTRY(Outdated, WGPUSurfaceGetCurrentTextureStatus_Outdated)
 	ENUM_ENTRY(Lost, WGPUSurfaceGetCurrentTextureStatus_Lost)
-	ENUM_ENTRY(OutOfMemory, WGPUSurfaceGetCurrentTextureStatus_OutOfMemory)
-	ENUM_ENTRY(DeviceLost, WGPUSurfaceGetCurrentTextureStatus_DeviceLost)
+	ENUM_ENTRY(Error, WGPUSurfaceGetCurrentTextureStatus_Error)
 	ENUM_ENTRY(Force32, WGPUSurfaceGetCurrentTextureStatus_Force32)
 END
 ENUM(TextureAspect)
@@ -495,6 +540,8 @@ ENUM(TextureFormat)
 	ENUM_ENTRY(R8Snorm, WGPUTextureFormat_R8Snorm)
 	ENUM_ENTRY(R8Uint, WGPUTextureFormat_R8Uint)
 	ENUM_ENTRY(R8Sint, WGPUTextureFormat_R8Sint)
+	ENUM_ENTRY(R16Unorm, WGPUTextureFormat_R16Unorm)
+	ENUM_ENTRY(R16Snorm, WGPUTextureFormat_R16Snorm)
 	ENUM_ENTRY(R16Uint, WGPUTextureFormat_R16Uint)
 	ENUM_ENTRY(R16Sint, WGPUTextureFormat_R16Sint)
 	ENUM_ENTRY(R16Float, WGPUTextureFormat_R16Float)
@@ -505,6 +552,8 @@ ENUM(TextureFormat)
 	ENUM_ENTRY(R32Float, WGPUTextureFormat_R32Float)
 	ENUM_ENTRY(R32Uint, WGPUTextureFormat_R32Uint)
 	ENUM_ENTRY(R32Sint, WGPUTextureFormat_R32Sint)
+	ENUM_ENTRY(RG16Unorm, WGPUTextureFormat_RG16Unorm)
+	ENUM_ENTRY(RG16Snorm, WGPUTextureFormat_RG16Snorm)
 	ENUM_ENTRY(RG16Uint, WGPUTextureFormat_RG16Uint)
 	ENUM_ENTRY(RG16Sint, WGPUTextureFormat_RG16Sint)
 	ENUM_ENTRY(RG16Float, WGPUTextureFormat_RG16Float)
@@ -522,6 +571,8 @@ ENUM(TextureFormat)
 	ENUM_ENTRY(RG32Float, WGPUTextureFormat_RG32Float)
 	ENUM_ENTRY(RG32Uint, WGPUTextureFormat_RG32Uint)
 	ENUM_ENTRY(RG32Sint, WGPUTextureFormat_RG32Sint)
+	ENUM_ENTRY(RGBA16Unorm, WGPUTextureFormat_RGBA16Unorm)
+	ENUM_ENTRY(RGBA16Snorm, WGPUTextureFormat_RGBA16Snorm)
 	ENUM_ENTRY(RGBA16Uint, WGPUTextureFormat_RGBA16Uint)
 	ENUM_ENTRY(RGBA16Sint, WGPUTextureFormat_RGBA16Sint)
 	ENUM_ENTRY(RGBA16Float, WGPUTextureFormat_RGBA16Float)
@@ -589,6 +640,7 @@ ENUM(TextureFormat)
 	ENUM_ENTRY(Force32, WGPUTextureFormat_Force32)
 END
 ENUM(TextureSampleType)
+	ENUM_ENTRY(BindingNotUsed, WGPUTextureSampleType_BindingNotUsed)
 	ENUM_ENTRY(Undefined, WGPUTextureSampleType_Undefined)
 	ENUM_ENTRY(Float, WGPUTextureSampleType_Float)
 	ENUM_ENTRY(UnfilterableFloat, WGPUTextureSampleType_UnfilterableFloat)
@@ -607,24 +659,37 @@ ENUM(TextureViewDimension)
 	ENUM_ENTRY(_3D, WGPUTextureViewDimension_3D)
 	ENUM_ENTRY(Force32, WGPUTextureViewDimension_Force32)
 END
+ENUM(ToneMappingMode)
+	ENUM_ENTRY(Standard, WGPUToneMappingMode_Standard)
+	ENUM_ENTRY(Extended, WGPUToneMappingMode_Extended)
+	ENUM_ENTRY(Force32, WGPUToneMappingMode_Force32)
+END
 ENUM(VertexFormat)
-	ENUM_ENTRY(Undefined, WGPUVertexFormat_Undefined)
+	ENUM_ENTRY(Uint8, WGPUVertexFormat_Uint8)
 	ENUM_ENTRY(Uint8x2, WGPUVertexFormat_Uint8x2)
 	ENUM_ENTRY(Uint8x4, WGPUVertexFormat_Uint8x4)
+	ENUM_ENTRY(Sint8, WGPUVertexFormat_Sint8)
 	ENUM_ENTRY(Sint8x2, WGPUVertexFormat_Sint8x2)
 	ENUM_ENTRY(Sint8x4, WGPUVertexFormat_Sint8x4)
+	ENUM_ENTRY(Unorm8, WGPUVertexFormat_Unorm8)
 	ENUM_ENTRY(Unorm8x2, WGPUVertexFormat_Unorm8x2)
 	ENUM_ENTRY(Unorm8x4, WGPUVertexFormat_Unorm8x4)
+	ENUM_ENTRY(Snorm8, WGPUVertexFormat_Snorm8)
 	ENUM_ENTRY(Snorm8x2, WGPUVertexFormat_Snorm8x2)
 	ENUM_ENTRY(Snorm8x4, WGPUVertexFormat_Snorm8x4)
+	ENUM_ENTRY(Uint16, WGPUVertexFormat_Uint16)
 	ENUM_ENTRY(Uint16x2, WGPUVertexFormat_Uint16x2)
 	ENUM_ENTRY(Uint16x4, WGPUVertexFormat_Uint16x4)
+	ENUM_ENTRY(Sint16, WGPUVertexFormat_Sint16)
 	ENUM_ENTRY(Sint16x2, WGPUVertexFormat_Sint16x2)
 	ENUM_ENTRY(Sint16x4, WGPUVertexFormat_Sint16x4)
+	ENUM_ENTRY(Unorm16, WGPUVertexFormat_Unorm16)
 	ENUM_ENTRY(Unorm16x2, WGPUVertexFormat_Unorm16x2)
 	ENUM_ENTRY(Unorm16x4, WGPUVertexFormat_Unorm16x4)
+	ENUM_ENTRY(Snorm16, WGPUVertexFormat_Snorm16)
 	ENUM_ENTRY(Snorm16x2, WGPUVertexFormat_Snorm16x2)
 	ENUM_ENTRY(Snorm16x4, WGPUVertexFormat_Snorm16x4)
+	ENUM_ENTRY(Float16, WGPUVertexFormat_Float16)
 	ENUM_ENTRY(Float16x2, WGPUVertexFormat_Float16x2)
 	ENUM_ENTRY(Float16x4, WGPUVertexFormat_Float16x4)
 	ENUM_ENTRY(Float32, WGPUVertexFormat_Float32)
@@ -639,12 +704,12 @@ ENUM(VertexFormat)
 	ENUM_ENTRY(Sint32x2, WGPUVertexFormat_Sint32x2)
 	ENUM_ENTRY(Sint32x3, WGPUVertexFormat_Sint32x3)
 	ENUM_ENTRY(Sint32x4, WGPUVertexFormat_Sint32x4)
-	ENUM_ENTRY(_2, WGPUVertexFormat_Unorm10_10_10_2)
+	ENUM_ENTRY(Unorm10_10_10_2, WGPUVertexFormat_Unorm10_10_10_2)
+	ENUM_ENTRY(Unorm8x4BGRA, WGPUVertexFormat_Unorm8x4BGRA)
 	ENUM_ENTRY(Force32, WGPUVertexFormat_Force32)
 END
 ENUM(VertexStepMode)
 	ENUM_ENTRY(Undefined, WGPUVertexStepMode_Undefined)
-	ENUM_ENTRY(VertexBufferNotUsed, WGPUVertexStepMode_VertexBufferNotUsed)
 	ENUM_ENTRY(Vertex, WGPUVertexStepMode_Vertex)
 	ENUM_ENTRY(Instance, WGPUVertexStepMode_Instance)
 	ENUM_ENTRY(Force32, WGPUVertexStepMode_Force32)
@@ -652,64 +717,64 @@ END
 ENUM(WaitStatus)
 	ENUM_ENTRY(Success, WGPUWaitStatus_Success)
 	ENUM_ENTRY(TimedOut, WGPUWaitStatus_TimedOut)
-	ENUM_ENTRY(UnsupportedTimeout, WGPUWaitStatus_UnsupportedTimeout)
-	ENUM_ENTRY(UnsupportedCount, WGPUWaitStatus_UnsupportedCount)
-	ENUM_ENTRY(UnsupportedMixedSources, WGPUWaitStatus_UnsupportedMixedSources)
-	ENUM_ENTRY(Unknown, WGPUWaitStatus_Unknown)
+	ENUM_ENTRY(Error, WGPUWaitStatus_Error)
 	ENUM_ENTRY(Force32, WGPUWaitStatus_Force32)
 END
+ENUM(WGSLLanguageFeatureName)
+	ENUM_ENTRY(ReadonlyAndReadwriteStorageTextures, WGPUWGSLLanguageFeatureName_ReadonlyAndReadwriteStorageTextures)
+	ENUM_ENTRY(Packed4x8IntegerDotProduct, WGPUWGSLLanguageFeatureName_Packed4x8IntegerDotProduct)
+	ENUM_ENTRY(UnrestrictedPointerParameters, WGPUWGSLLanguageFeatureName_UnrestrictedPointerParameters)
+	ENUM_ENTRY(PointerCompositeAccess, WGPUWGSLLanguageFeatureName_PointerCompositeAccess)
+	ENUM_ENTRY(UniformBufferStandardLayout, WGPUWGSLLanguageFeatureName_UniformBufferStandardLayout)
+	ENUM_ENTRY(Force32, WGPUWGSLLanguageFeatureName_Force32)
+END
 ENUM(BufferUsage)
-	ENUM_ENTRY(None, WGPUBufferUsage_None)
-	ENUM_ENTRY(MapRead, WGPUBufferUsage_MapRead)
-	ENUM_ENTRY(MapWrite, WGPUBufferUsage_MapWrite)
-	ENUM_ENTRY(CopySrc, WGPUBufferUsage_CopySrc)
-	ENUM_ENTRY(CopyDst, WGPUBufferUsage_CopyDst)
-	ENUM_ENTRY(Index, WGPUBufferUsage_Index)
-	ENUM_ENTRY(Vertex, WGPUBufferUsage_Vertex)
-	ENUM_ENTRY(Uniform, WGPUBufferUsage_Uniform)
-	ENUM_ENTRY(Storage, WGPUBufferUsage_Storage)
-	ENUM_ENTRY(Indirect, WGPUBufferUsage_Indirect)
-	ENUM_ENTRY(QueryResolve, WGPUBufferUsage_QueryResolve)
-	ENUM_ENTRY(Force32, WGPUBufferUsage_Force32)
+	ENUM_ENTRY(None, 0x0000000000000000)
+	ENUM_ENTRY(MapRead, 0x0000000000000001)
+	ENUM_ENTRY(MapWrite, 0x0000000000000002)
+	ENUM_ENTRY(CopySrc, 0x0000000000000004)
+	ENUM_ENTRY(CopyDst, 0x0000000000000008)
+	ENUM_ENTRY(Index, 0x0000000000000010)
+	ENUM_ENTRY(Vertex, 0x0000000000000020)
+	ENUM_ENTRY(Uniform, 0x0000000000000040)
+	ENUM_ENTRY(Storage, 0x0000000000000080)
+	ENUM_ENTRY(Indirect, 0x0000000000000100)
+	ENUM_ENTRY(QueryResolve, 0x0000000000000200)
 END
 ENUM(ColorWriteMask)
-	ENUM_ENTRY(None, WGPUColorWriteMask_None)
-	ENUM_ENTRY(Red, WGPUColorWriteMask_Red)
-	ENUM_ENTRY(Green, WGPUColorWriteMask_Green)
-	ENUM_ENTRY(Blue, WGPUColorWriteMask_Blue)
-	ENUM_ENTRY(Alpha, WGPUColorWriteMask_Alpha)
-	ENUM_ENTRY(All, WGPUColorWriteMask_All)
-	ENUM_ENTRY(Force32, WGPUColorWriteMask_Force32)
+	ENUM_ENTRY(None, 0x0000000000000000)
+	ENUM_ENTRY(Red, 0x0000000000000001)
+	ENUM_ENTRY(Green, 0x0000000000000002)
+	ENUM_ENTRY(Blue, 0x0000000000000004)
+	ENUM_ENTRY(Alpha, 0x0000000000000008)
+	ENUM_ENTRY(All, 0x000000000000000F)
 END
 ENUM(MapMode)
-	ENUM_ENTRY(None, WGPUMapMode_None)
-	ENUM_ENTRY(Read, WGPUMapMode_Read)
-	ENUM_ENTRY(Write, WGPUMapMode_Write)
-	ENUM_ENTRY(Force32, WGPUMapMode_Force32)
+	ENUM_ENTRY(None, 0x0000000000000000)
+	ENUM_ENTRY(Read, 0x0000000000000001)
+	ENUM_ENTRY(Write, 0x0000000000000002)
 END
 ENUM(ShaderStage)
-	ENUM_ENTRY(None, WGPUShaderStage_None)
-	ENUM_ENTRY(Vertex, WGPUShaderStage_Vertex)
-	ENUM_ENTRY(Fragment, WGPUShaderStage_Fragment)
-	ENUM_ENTRY(Compute, WGPUShaderStage_Compute)
-	ENUM_ENTRY(Force32, WGPUShaderStage_Force32)
+	ENUM_ENTRY(None, 0x0000000000000000)
+	ENUM_ENTRY(Vertex, 0x0000000000000001)
+	ENUM_ENTRY(Fragment, 0x0000000000000002)
+	ENUM_ENTRY(Compute, 0x0000000000000004)
 END
 ENUM(TextureUsage)
-	ENUM_ENTRY(None, WGPUTextureUsage_None)
-	ENUM_ENTRY(CopySrc, WGPUTextureUsage_CopySrc)
-	ENUM_ENTRY(CopyDst, WGPUTextureUsage_CopyDst)
-	ENUM_ENTRY(TextureBinding, WGPUTextureUsage_TextureBinding)
-	ENUM_ENTRY(StorageBinding, WGPUTextureUsage_StorageBinding)
-	ENUM_ENTRY(RenderAttachment, WGPUTextureUsage_RenderAttachment)
-	ENUM_ENTRY(Force32, WGPUTextureUsage_Force32)
+	ENUM_ENTRY(None, 0x0000000000000000)
+	ENUM_ENTRY(CopySrc, 0x0000000000000001)
+	ENUM_ENTRY(CopyDst, 0x0000000000000002)
+	ENUM_ENTRY(TextureBinding, 0x0000000000000004)
+	ENUM_ENTRY(StorageBinding, 0x0000000000000008)
+	ENUM_ENTRY(RenderAttachment, 0x0000000000000010)
 END
 
 // Structs
-STRUCT(ChainedStruct)
+STRUCT(StringView)
 	void setDefault();
 END
 
-STRUCT(ChainedStructOut)
+STRUCT(ChainedStruct)
 	void setDefault();
 END
 
@@ -722,10 +787,6 @@ STRUCT(Color)
 	Color(double r, double g, double b, double a) : WGPUColor{ r, g, b, a } {}
 END
 
-STRUCT(ComputePassTimestampWrites)
-	void setDefault();
-END
-
 STRUCT(Extent3D)
 	void setDefault();
 	Extent3D(uint32_t width, uint32_t height, uint32_t depthOrArrayLayers) : WGPUExtent3D{ width, height, depthOrArrayLayers } {}
@@ -735,36 +796,24 @@ STRUCT(Future)
 	void setDefault();
 END
 
-STRUCT(Limits)
-	void setDefault();
-END
-
 STRUCT(Origin3D)
 	void setDefault();
 	Origin3D(uint32_t x, uint32_t y, uint32_t z) : WGPUOrigin3D{ x, y, z } {}
 END
 
-STRUCT(PrimitiveDepthClipControl)
+STRUCT(RenderPassMaxDrawCount)
 	void setDefault();
 END
 
-STRUCT(RenderPassDepthStencilAttachment)
+STRUCT(RequestAdapterWebXROptions)
 	void setDefault();
 END
 
-STRUCT(RenderPassDescriptorMaxDrawCount)
+STRUCT(ShaderSourceSPIRV)
 	void setDefault();
 END
 
-STRUCT(RenderPassTimestampWrites)
-	void setDefault();
-END
-
-STRUCT(ShaderModuleSPIRVDescriptor)
-	void setDefault();
-END
-
-STRUCT(ShaderModuleWGSLDescriptor)
+STRUCT(ShaderSourceWGSL)
 	void setDefault();
 END
 
@@ -772,19 +821,54 @@ STRUCT(StencilFaceState)
 	void setDefault();
 END
 
-STRUCT(SurfaceDescriptorFromCanvasHTMLSelector)
+STRUCT(SupportedFeatures)
+	void setDefault();
+	void freeMembers();
+END
+
+STRUCT(SupportedInstanceFeatures)
+	void setDefault();
+	void freeMembers();
+END
+
+STRUCT(SupportedWGSLLanguageFeatures)
+	void setDefault();
+	void freeMembers();
+END
+
+STRUCT(SurfaceColorManagement)
 	void setDefault();
 END
 
-STRUCT(SurfaceTexture)
+STRUCT(SurfaceSourceAndroidNativeWindow)
 	void setDefault();
 END
 
-STRUCT(TextureBindingViewDimensionDescriptor)
+STRUCT(SurfaceSourceMetalLayer)
 	void setDefault();
 END
 
-STRUCT(VertexAttribute)
+STRUCT(SurfaceSourceWaylandSurface)
+	void setDefault();
+END
+
+STRUCT(SurfaceSourceWindowsHWND)
+	void setDefault();
+END
+
+STRUCT(SurfaceSourceXCBWindow)
+	void setDefault();
+END
+
+STRUCT(SurfaceSourceXlibWindow)
+	void setDefault();
+END
+
+STRUCT(TexelCopyBufferLayout)
+	void setDefault();
+END
+
+STRUCT(TextureComponentSwizzle)
 	void setDefault();
 END
 
@@ -796,18 +880,61 @@ STRUCT(FutureWaitInfo)
 	void setDefault();
 END
 
-STRUCT(VertexBufferLayout)
+STRUCT(TexelCopyBufferInfo)
+	void setDefault();
+END
+
+STRUCT(TexelCopyTextureInfo)
+	void setDefault();
+END
+
+STRUCT(TextureComponentSwizzleDescriptor)
 	void setDefault();
 END
 
 
 // Descriptors
-DESCRIPTOR(AdapterInfo)
+DESCRIPTOR(BufferMapCallbackInfo)
 	void setDefault();
-	void freeMembers();
 END
 
-DESCRIPTOR(AdapterProperties)
+DESCRIPTOR(CompilationInfoCallbackInfo)
+	void setDefault();
+END
+
+DESCRIPTOR(CreateComputePipelineAsyncCallbackInfo)
+	void setDefault();
+END
+
+DESCRIPTOR(CreateRenderPipelineAsyncCallbackInfo)
+	void setDefault();
+END
+
+DESCRIPTOR(DeviceLostCallbackInfo)
+	void setDefault();
+END
+
+DESCRIPTOR(PopErrorScopeCallbackInfo)
+	void setDefault();
+END
+
+DESCRIPTOR(QueueWorkDoneCallbackInfo)
+	void setDefault();
+END
+
+DESCRIPTOR(RequestAdapterCallbackInfo)
+	void setDefault();
+END
+
+DESCRIPTOR(RequestDeviceCallbackInfo)
+	void setDefault();
+END
+
+DESCRIPTOR(UncapturedErrorCallbackInfo)
+	void setDefault();
+END
+
+DESCRIPTOR(AdapterInfo)
 	void setDefault();
 	void freeMembers();
 END
@@ -821,10 +948,6 @@ DESCRIPTOR(BufferBindingLayout)
 END
 
 DESCRIPTOR(BufferDescriptor)
-	void setDefault();
-END
-
-DESCRIPTOR(BufferMapCallbackInfo)
 	void setDefault();
 END
 
@@ -844,11 +967,19 @@ DESCRIPTOR(ConstantEntry)
 	void setDefault();
 END
 
-DESCRIPTOR(InstanceFeatures)
+DESCRIPTOR(InstanceLimits)
+	void setDefault();
+END
+
+DESCRIPTOR(Limits)
 	void setDefault();
 END
 
 DESCRIPTOR(MultisampleState)
+	void setDefault();
+END
+
+DESCRIPTOR(PassTimestampWrites)
 	void setDefault();
 END
 
@@ -868,10 +999,6 @@ DESCRIPTOR(QueueDescriptor)
 	void setDefault();
 END
 
-DESCRIPTOR(QueueWorkDoneCallbackInfo)
-	void setDefault();
-END
-
 DESCRIPTOR(RenderBundleDescriptor)
 	void setDefault();
 END
@@ -880,11 +1007,7 @@ DESCRIPTOR(RenderBundleEncoderDescriptor)
 	void setDefault();
 END
 
-DESCRIPTOR(RequestAdapterCallbackInfo)
-	void setDefault();
-END
-
-DESCRIPTOR(RequestAdapterOptions)
+DESCRIPTOR(RenderPassDepthStencilAttachment)
 	void setDefault();
 END
 
@@ -893,10 +1016,6 @@ DESCRIPTOR(SamplerBindingLayout)
 END
 
 DESCRIPTOR(SamplerDescriptor)
-	void setDefault();
-END
-
-DESCRIPTOR(ShaderModuleDescriptor)
 	void setDefault();
 END
 
@@ -913,11 +1032,7 @@ DESCRIPTOR(SurfaceConfiguration)
 	void setDefault();
 END
 
-DESCRIPTOR(SurfaceDescriptor)
-	void setDefault();
-END
-
-DESCRIPTOR(SwapChainDescriptor)
+DESCRIPTOR(SurfaceTexture)
 	void setDefault();
 END
 
@@ -925,11 +1040,11 @@ DESCRIPTOR(TextureBindingLayout)
 	void setDefault();
 END
 
-DESCRIPTOR(TextureDataLayout)
+DESCRIPTOR(TextureViewDescriptor)
 	void setDefault();
 END
 
-DESCRIPTOR(TextureViewDescriptor)
+DESCRIPTOR(VertexAttribute)
 	void setDefault();
 END
 
@@ -949,15 +1064,15 @@ DESCRIPTOR(ComputePassDescriptor)
 	void setDefault();
 END
 
+DESCRIPTOR(ComputeState)
+	void setDefault();
+END
+
 DESCRIPTOR(DepthStencilState)
 	void setDefault();
 END
 
-DESCRIPTOR(ImageCopyBuffer)
-	void setDefault();
-END
-
-DESCRIPTOR(ImageCopyTexture)
+DESCRIPTOR(DeviceDescriptor)
 	void setDefault();
 END
 
@@ -965,23 +1080,27 @@ DESCRIPTOR(InstanceDescriptor)
 	void setDefault();
 END
 
-DESCRIPTOR(ProgrammableStageDescriptor)
-	void setDefault();
-END
-
 DESCRIPTOR(RenderPassColorAttachment)
 	void setDefault();
 END
 
-DESCRIPTOR(RequiredLimits)
+DESCRIPTOR(RequestAdapterOptions)
 	void setDefault();
 END
 
-DESCRIPTOR(SupportedLimits)
+DESCRIPTOR(ShaderModuleDescriptor)
+	void setDefault();
+END
+
+DESCRIPTOR(SurfaceDescriptor)
 	void setDefault();
 END
 
 DESCRIPTOR(TextureDescriptor)
+	void setDefault();
+END
+
+DESCRIPTOR(VertexBufferLayout)
 	void setDefault();
 END
 
@@ -994,10 +1113,6 @@ DESCRIPTOR(ColorTargetState)
 END
 
 DESCRIPTOR(ComputePipelineDescriptor)
-	void setDefault();
-END
-
-DESCRIPTOR(DeviceDescriptor)
 	void setDefault();
 END
 
@@ -1039,64 +1154,94 @@ class RenderPipeline;
 class Sampler;
 class ShaderModule;
 class Surface;
-class SwapChain;
 class Texture;
 class TextureView;
 
 // Callback types
-using BufferMapCallback = std::function<void(BufferMapAsyncStatus status)>;
-using CompilationInfoCallback = std::function<void(CompilationInfoRequestStatus status, const CompilationInfo& compilationInfo)>;
-using CreateComputePipelineAsyncCallback = std::function<void(CreatePipelineAsyncStatus status, ComputePipeline pipeline, char const * message)>;
-using CreateRenderPipelineAsyncCallback = std::function<void(CreatePipelineAsyncStatus status, RenderPipeline pipeline, char const * message)>;
-using DeviceLostCallback = std::function<void(DeviceLostReason reason, char const * message)>;
-using ErrorCallback = std::function<void(ErrorType type, char const * message)>;
-using QueueWorkDoneCallback = std::function<void(QueueWorkDoneStatus status)>;
-using RequestAdapterCallback = std::function<void(RequestAdapterStatus status, Adapter adapter, char const * message)>;
-using RequestDeviceCallback = std::function<void(RequestDeviceStatus status, Device device, char const * message)>;
-using ProcDeviceSetUncapturedErrorCallback = std::function<void(Device device, ErrorCallback&& callback)>;
+using BufferMapCallback = std::function<void(MapAsyncStatus status, StringView message, void* userdata1)>;
+using CompilationInfoCallback = std::function<void(CompilationInfoRequestStatus status, const CompilationInfo& compilationInfo, void* userdata1)>;
+using CreateComputePipelineAsyncCallback = std::function<void(CreatePipelineAsyncStatus status, ComputePipeline pipeline, StringView message, void* userdata1)>;
+using CreateRenderPipelineAsyncCallback = std::function<void(CreatePipelineAsyncStatus status, RenderPipeline pipeline, StringView message, void* userdata1)>;
+using DeviceLostCallback = std::function<void(Device const * device, DeviceLostReason reason, StringView message, void* userdata1)>;
+using PopErrorScopeCallback = std::function<void(PopErrorScopeStatus status, ErrorType type, StringView message, void* userdata1)>;
+using QueueWorkDoneCallback = std::function<void(QueueWorkDoneStatus status, StringView message, void* userdata1)>;
+using RequestAdapterCallback = std::function<void(RequestAdapterStatus status, Adapter adapter, StringView message, void* userdata1)>;
+using RequestDeviceCallback = std::function<void(RequestDeviceStatus status, Device device, StringView message, void* userdata1)>;
+using UncapturedErrorCallback = std::function<void(Device const * device, ErrorType type, StringView message, void* userdata1)>;
 
 // Handles detailed declarations
 HANDLE(Adapter)
-	size_t enumerateFeatures(FeatureName * features) const;
-	void getInfo(AdapterInfo * info) const;
-	Bool getLimits(SupportedLimits * limits) const;
-	void getProperties(AdapterProperties * properties) const;
+	void getFeatures(SupportedFeatures * features) const;
+	Status getInfo(AdapterInfo * info) const;
+	Status getLimits(Limits * limits) const;
 	Bool hasFeature(FeatureName feature) const;
-	NO_DISCARD std::unique_ptr<RequestDeviceCallback> requestDevice(const DeviceDescriptor& descriptor, RequestDeviceCallback&& callback) const;
-	void reference() const;
+	template<typename Lambda>
+	Future requestDevice(const DeviceDescriptor& descriptor, CallbackMode callbackMode, const Lambda& callback) const {
+		auto* lambda = new Lambda(callback);
+		auto cCallback = [](WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView message, void* userdata1, void*) -> void {
+			std::unique_ptr<Lambda> lambda(reinterpret_cast<Lambda*>(userdata1));
+			(*lambda)(static_cast<RequestDeviceStatus>(status), device, message);
+		};
+		WGPURequestDeviceCallbackInfo callbackInfo = {
+			/* nextInChain = */ nullptr,
+			/* mode = */ callbackMode,
+			/* callback = */ cCallback,
+			/* userdata1 = */ (void*)lambda,
+			/* userdata2 = */ nullptr,
+		};
+		return wgpuAdapterRequestDevice(m_raw, &descriptor, callbackInfo);
+	}
+	void addRef() const;
 	void release() const;
 	Device requestDevice(const DeviceDescriptor& descriptor);
 END
 
 HANDLE(BindGroup)
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(BindGroupLayout)
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(Buffer)
 	void destroy() const;
 	void const * getConstMappedRange(size_t offset, size_t size) const;
-	BufferMapState getMapState() const;
 	void * getMappedRange(size_t offset, size_t size) const;
+	BufferMapState getMapState() const;
 	uint64_t getSize() const;
-	BufferUsageFlags getUsage() const;
-	NO_DISCARD std::unique_ptr<BufferMapCallback> mapAsync(MapModeFlags mode, size_t offset, size_t size, BufferMapCallback&& callback) const;
-	void setLabel(char const * label) const;
+	BufferUsage getUsage() const;
+	template<typename Lambda>
+	Future mapAsync(MapMode mode, size_t offset, size_t size, CallbackMode callbackMode, const Lambda& callback) const {
+		auto* lambda = new Lambda(callback);
+		auto cCallback = [](WGPUMapAsyncStatus status, WGPUStringView message, void* userdata1, void*) -> void {
+			std::unique_ptr<Lambda> lambda(reinterpret_cast<Lambda*>(userdata1));
+			(*lambda)(static_cast<MapAsyncStatus>(status), message);
+		};
+		WGPUBufferMapCallbackInfo callbackInfo = {
+			/* nextInChain = */ nullptr,
+			/* mode = */ callbackMode,
+			/* callback = */ cCallback,
+			/* userdata1 = */ (void*)lambda,
+			/* userdata2 = */ nullptr,
+		};
+		return wgpuBufferMapAsync(m_raw, static_cast<WGPUMapMode>(mode), offset, size, callbackInfo);
+	}
+	Status readMappedRange(size_t offset, void * data, size_t size) const;
+	void setLabel(StringView label) const;
 	void unmap() const;
-	void reference() const;
+	Status writeMappedRange(size_t offset, void const * data, size_t size) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(CommandBuffer)
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
@@ -1106,18 +1251,18 @@ HANDLE(CommandEncoder)
 	RenderPassEncoder beginRenderPass(const RenderPassDescriptor& descriptor) const;
 	void clearBuffer(Buffer buffer, uint64_t offset, uint64_t size) const;
 	void copyBufferToBuffer(Buffer source, uint64_t sourceOffset, Buffer destination, uint64_t destinationOffset, uint64_t size) const;
-	void copyBufferToTexture(const ImageCopyBuffer& source, const ImageCopyTexture& destination, const Extent3D& copySize) const;
-	void copyTextureToBuffer(const ImageCopyTexture& source, const ImageCopyBuffer& destination, const Extent3D& copySize) const;
-	void copyTextureToTexture(const ImageCopyTexture& source, const ImageCopyTexture& destination, const Extent3D& copySize) const;
+	void copyBufferToTexture(const TexelCopyBufferInfo& source, const TexelCopyTextureInfo& destination, const Extent3D& copySize) const;
+	void copyTextureToBuffer(const TexelCopyTextureInfo& source, const TexelCopyBufferInfo& destination, const Extent3D& copySize) const;
+	void copyTextureToTexture(const TexelCopyTextureInfo& source, const TexelCopyTextureInfo& destination, const Extent3D& copySize) const;
 	CommandBuffer finish(const CommandBufferDescriptor& descriptor) const;
 	CommandBuffer finish() const;
-	void insertDebugMarker(char const * markerLabel) const;
+	void insertDebugMarker(StringView markerLabel) const;
 	void popDebugGroup() const;
-	void pushDebugGroup(char const * groupLabel) const;
+	void pushDebugGroup(StringView groupLabel) const;
 	void resolveQuerySet(QuerySet querySet, uint32_t firstQuery, uint32_t queryCount, Buffer destination, uint64_t destinationOffset) const;
-	void setLabel(char const * label) const;
+	void setLabel(StringView label) const;
 	void writeTimestamp(QuerySet querySet, uint32_t queryIndex) const;
-	void reference() const;
+	void addRef() const;
 	void release() const;
 END
 
@@ -1125,70 +1270,130 @@ HANDLE(ComputePassEncoder)
 	void dispatchWorkgroups(uint32_t workgroupCountX, uint32_t workgroupCountY, uint32_t workgroupCountZ) const;
 	void dispatchWorkgroupsIndirect(Buffer indirectBuffer, uint64_t indirectOffset) const;
 	void end() const;
-	void insertDebugMarker(char const * markerLabel) const;
+	void insertDebugMarker(StringView markerLabel) const;
 	void popDebugGroup() const;
-	void pushDebugGroup(char const * groupLabel) const;
+	void pushDebugGroup(StringView groupLabel) const;
 	void setBindGroup(uint32_t groupIndex, BindGroup group, size_t dynamicOffsetCount, uint32_t const * dynamicOffsets) const;
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const std::vector<uint32_t>& dynamicOffsets) const;
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const uint32_t& dynamicOffsets) const;
-	void setLabel(char const * label) const;
+	void setLabel(StringView label) const;
 	void setPipeline(ComputePipeline pipeline) const;
-	void writeTimestamp(QuerySet querySet, uint32_t queryIndex) const;
-	void reference() const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(ComputePipeline)
 	BindGroupLayout getBindGroupLayout(uint32_t groupIndex) const;
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(Device)
 	BindGroup createBindGroup(const BindGroupDescriptor& descriptor) const;
 	BindGroupLayout createBindGroupLayout(const BindGroupLayoutDescriptor& descriptor) const;
-	Buffer createBuffer(const BufferDescriptor& descriptor) const;
+	_NULLABLE WGPUBuffer createBuffer(const BufferDescriptor& descriptor) const;
 	CommandEncoder createCommandEncoder(const CommandEncoderDescriptor& descriptor) const;
 	CommandEncoder createCommandEncoder() const;
 	ComputePipeline createComputePipeline(const ComputePipelineDescriptor& descriptor) const;
-	NO_DISCARD std::unique_ptr<CreateComputePipelineAsyncCallback> createComputePipelineAsync(const ComputePipelineDescriptor& descriptor, CreateComputePipelineAsyncCallback&& callback) const;
+	template<typename Lambda>
+	Future createComputePipelineAsync(const ComputePipelineDescriptor& descriptor, CallbackMode callbackMode, const Lambda& callback) const {
+		auto* lambda = new Lambda(callback);
+		auto cCallback = [](WGPUCreatePipelineAsyncStatus status, WGPUComputePipeline pipeline, WGPUStringView message, void* userdata1, void*) -> void {
+			std::unique_ptr<Lambda> lambda(reinterpret_cast<Lambda*>(userdata1));
+			(*lambda)(static_cast<CreatePipelineAsyncStatus>(status), pipeline, message);
+		};
+		WGPUCreateComputePipelineAsyncCallbackInfo callbackInfo = {
+			/* nextInChain = */ nullptr,
+			/* mode = */ callbackMode,
+			/* callback = */ cCallback,
+			/* userdata1 = */ (void*)lambda,
+			/* userdata2 = */ nullptr,
+		};
+		return wgpuDeviceCreateComputePipelineAsync(m_raw, &descriptor, callbackInfo);
+	}
 	PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor& descriptor) const;
 	QuerySet createQuerySet(const QuerySetDescriptor& descriptor) const;
 	RenderBundleEncoder createRenderBundleEncoder(const RenderBundleEncoderDescriptor& descriptor) const;
 	RenderPipeline createRenderPipeline(const RenderPipelineDescriptor& descriptor) const;
-	NO_DISCARD std::unique_ptr<CreateRenderPipelineAsyncCallback> createRenderPipelineAsync(const RenderPipelineDescriptor& descriptor, CreateRenderPipelineAsyncCallback&& callback) const;
+	template<typename Lambda>
+	Future createRenderPipelineAsync(const RenderPipelineDescriptor& descriptor, CallbackMode callbackMode, const Lambda& callback) const {
+		auto* lambda = new Lambda(callback);
+		auto cCallback = [](WGPUCreatePipelineAsyncStatus status, WGPURenderPipeline pipeline, WGPUStringView message, void* userdata1, void*) -> void {
+			std::unique_ptr<Lambda> lambda(reinterpret_cast<Lambda*>(userdata1));
+			(*lambda)(static_cast<CreatePipelineAsyncStatus>(status), pipeline, message);
+		};
+		WGPUCreateRenderPipelineAsyncCallbackInfo callbackInfo = {
+			/* nextInChain = */ nullptr,
+			/* mode = */ callbackMode,
+			/* callback = */ cCallback,
+			/* userdata1 = */ (void*)lambda,
+			/* userdata2 = */ nullptr,
+		};
+		return wgpuDeviceCreateRenderPipelineAsync(m_raw, &descriptor, callbackInfo);
+	}
 	Sampler createSampler(const SamplerDescriptor& descriptor) const;
 	Sampler createSampler() const;
 	ShaderModule createShaderModule(const ShaderModuleDescriptor& descriptor) const;
-	SwapChain createSwapChain(Surface surface, const SwapChainDescriptor& descriptor) const;
 	Texture createTexture(const TextureDescriptor& descriptor) const;
 	void destroy() const;
-	size_t enumerateFeatures(FeatureName * features) const;
-	Bool getLimits(SupportedLimits * limits) const;
+	Status getAdapterInfo(AdapterInfo * adapterInfo) const;
+	void getFeatures(SupportedFeatures * features) const;
+	Status getLimits(Limits * limits) const;
 	Queue getQueue() const;
 	Bool hasFeature(FeatureName feature) const;
-	NO_DISCARD std::unique_ptr<ErrorCallback> popErrorScope(ErrorCallback&& callback) const;
+	template<typename Lambda>
+	Future popErrorScope(CallbackMode callbackMode, const Lambda& callback) const {
+		auto* lambda = new Lambda(callback);
+		auto cCallback = [](WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void* userdata1, void*) -> void {
+			std::unique_ptr<Lambda> lambda(reinterpret_cast<Lambda*>(userdata1));
+			(*lambda)(static_cast<PopErrorScopeStatus>(status), static_cast<ErrorType>(type), message);
+		};
+		WGPUPopErrorScopeCallbackInfo callbackInfo = {
+			/* nextInChain = */ nullptr,
+			/* mode = */ callbackMode,
+			/* callback = */ cCallback,
+			/* userdata1 = */ (void*)lambda,
+			/* userdata2 = */ nullptr,
+		};
+		return wgpuDevicePopErrorScope(m_raw, callbackInfo);
+	}
 	void pushErrorScope(ErrorFilter filter) const;
-	void setLabel(char const * label) const;
-	NO_DISCARD std::unique_ptr<ErrorCallback> setUncapturedErrorCallback(ErrorCallback&& callback) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(Instance)
 	Surface createSurface(const SurfaceDescriptor& descriptor) const;
-	Bool hasWGSLLanguageFeature(WGSLFeatureName feature) const;
+	void getWGSLLanguageFeatures(SupportedWGSLLanguageFeatures * features) const;
+	Bool hasWGSLLanguageFeature(WGSLLanguageFeatureName feature) const;
 	void processEvents() const;
-	NO_DISCARD std::unique_ptr<RequestAdapterCallback> requestAdapter(const RequestAdapterOptions& options, RequestAdapterCallback&& callback) const;
-	void reference() const;
+	template<typename Lambda>
+	Future requestAdapter(const RequestAdapterOptions& options, CallbackMode callbackMode, const Lambda& callback) const {
+		auto* lambda = new Lambda(callback);
+		auto cCallback = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView message, void* userdata1, void*) -> void {
+			std::unique_ptr<Lambda> lambda(reinterpret_cast<Lambda*>(userdata1));
+			(*lambda)(static_cast<RequestAdapterStatus>(status), adapter, message);
+		};
+		WGPURequestAdapterCallbackInfo callbackInfo = {
+			/* nextInChain = */ nullptr,
+			/* mode = */ callbackMode,
+			/* callback = */ cCallback,
+			/* userdata1 = */ (void*)lambda,
+			/* userdata2 = */ nullptr,
+		};
+		return wgpuInstanceRequestAdapter(m_raw, &options, callbackInfo);
+	}
+	WaitStatus waitAny(size_t futureCount, FutureWaitInfo * futures, uint64_t timeoutNS) const;
+	void addRef() const;
 	void release() const;
 	Adapter requestAdapter(const RequestAdapterOptions& options);
 END
 
 HANDLE(PipelineLayout)
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
@@ -1196,26 +1401,41 @@ HANDLE(QuerySet)
 	void destroy() const;
 	uint32_t getCount() const;
 	QueryType getType() const;
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(Queue)
-	NO_DISCARD std::unique_ptr<QueueWorkDoneCallback> onSubmittedWorkDone(QueueWorkDoneCallback&& callback) const;
-	void setLabel(char const * label) const;
+	template<typename Lambda>
+	Future onSubmittedWorkDone(CallbackMode callbackMode, const Lambda& callback) const {
+		auto* lambda = new Lambda(callback);
+		auto cCallback = [](WGPUQueueWorkDoneStatus status, WGPUStringView message, void* userdata1, void*) -> void {
+			std::unique_ptr<Lambda> lambda(reinterpret_cast<Lambda*>(userdata1));
+			(*lambda)(static_cast<QueueWorkDoneStatus>(status), message);
+		};
+		WGPUQueueWorkDoneCallbackInfo callbackInfo = {
+			/* nextInChain = */ nullptr,
+			/* mode = */ callbackMode,
+			/* callback = */ cCallback,
+			/* userdata1 = */ (void*)lambda,
+			/* userdata2 = */ nullptr,
+		};
+		return wgpuQueueOnSubmittedWorkDone(m_raw, callbackInfo);
+	}
+	void setLabel(StringView label) const;
 	void submit(size_t commandCount, CommandBuffer const * commands) const;
 	void submit(const std::vector<WGPUCommandBuffer>& commands) const;
 	void submit(const WGPUCommandBuffer& commands) const;
 	void writeBuffer(Buffer buffer, uint64_t bufferOffset, void const * data, size_t size) const;
-	void writeTexture(const ImageCopyTexture& destination, void const * data, size_t dataSize, const TextureDataLayout& dataLayout, const Extent3D& writeSize) const;
-	void reference() const;
+	void writeTexture(const TexelCopyTextureInfo& destination, void const * data, size_t dataSize, const TexelCopyBufferLayout& dataLayout, const Extent3D& writeSize) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(RenderBundle)
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
@@ -1226,17 +1446,17 @@ HANDLE(RenderBundleEncoder)
 	void drawIndirect(Buffer indirectBuffer, uint64_t indirectOffset) const;
 	RenderBundle finish(const RenderBundleDescriptor& descriptor) const;
 	RenderBundle finish() const;
-	void insertDebugMarker(char const * markerLabel) const;
+	void insertDebugMarker(StringView markerLabel) const;
 	void popDebugGroup() const;
-	void pushDebugGroup(char const * groupLabel) const;
+	void pushDebugGroup(StringView groupLabel) const;
 	void setBindGroup(uint32_t groupIndex, BindGroup group, size_t dynamicOffsetCount, uint32_t const * dynamicOffsets) const;
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const std::vector<uint32_t>& dynamicOffsets) const;
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const uint32_t& dynamicOffsets) const;
 	void setIndexBuffer(Buffer buffer, IndexFormat format, uint64_t offset, uint64_t size) const;
-	void setLabel(char const * label) const;
+	void setLabel(StringView label) const;
 	void setPipeline(RenderPipeline pipeline) const;
 	void setVertexBuffer(uint32_t slot, Buffer buffer, uint64_t offset, uint64_t size) const;
-	void reference() const;
+	void addRef() const;
 	void release() const;
 END
 
@@ -1251,61 +1471,67 @@ HANDLE(RenderPassEncoder)
 	void executeBundles(size_t bundleCount, RenderBundle const * bundles) const;
 	void executeBundles(const std::vector<WGPURenderBundle>& bundles) const;
 	void executeBundles(const WGPURenderBundle& bundles) const;
-	void insertDebugMarker(char const * markerLabel) const;
+	void insertDebugMarker(StringView markerLabel) const;
 	void popDebugGroup() const;
-	void pushDebugGroup(char const * groupLabel) const;
+	void pushDebugGroup(StringView groupLabel) const;
 	void setBindGroup(uint32_t groupIndex, BindGroup group, size_t dynamicOffsetCount, uint32_t const * dynamicOffsets) const;
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const std::vector<uint32_t>& dynamicOffsets) const;
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const uint32_t& dynamicOffsets) const;
 	void setBlendConstant(const Color& color) const;
 	void setIndexBuffer(Buffer buffer, IndexFormat format, uint64_t offset, uint64_t size) const;
-	void setLabel(char const * label) const;
+	void setLabel(StringView label) const;
 	void setPipeline(RenderPipeline pipeline) const;
 	void setScissorRect(uint32_t x, uint32_t y, uint32_t width, uint32_t height) const;
 	void setStencilReference(uint32_t reference) const;
 	void setVertexBuffer(uint32_t slot, Buffer buffer, uint64_t offset, uint64_t size) const;
 	void setViewport(float x, float y, float width, float height, float minDepth, float maxDepth) const;
-	void writeTimestamp(QuerySet querySet, uint32_t queryIndex) const;
-	void reference() const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(RenderPipeline)
 	BindGroupLayout getBindGroupLayout(uint32_t groupIndex) const;
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(Sampler)
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(ShaderModule)
-	NO_DISCARD std::unique_ptr<CompilationInfoCallback> getCompilationInfo(CompilationInfoCallback&& callback) const;
-	void setLabel(char const * label) const;
-	void reference() const;
+	template<typename Lambda>
+	Future getCompilationInfo(CallbackMode callbackMode, const Lambda& callback) const {
+		auto* lambda = new Lambda(callback);
+		auto cCallback = [](WGPUCompilationInfoRequestStatus status, struct WGPUCompilationInfo const * compilationInfo, void* userdata1, void*) -> void {
+			std::unique_ptr<Lambda> lambda(reinterpret_cast<Lambda*>(userdata1));
+			(*lambda)(static_cast<CompilationInfoRequestStatus>(status), *reinterpret_cast<CompilationInfo const *>(compilationInfo));
+		};
+		WGPUCompilationInfoCallbackInfo callbackInfo = {
+			/* nextInChain = */ nullptr,
+			/* mode = */ callbackMode,
+			/* callback = */ cCallback,
+			/* userdata1 = */ (void*)lambda,
+			/* userdata2 = */ nullptr,
+		};
+		return wgpuShaderModuleGetCompilationInfo(m_raw, callbackInfo);
+	}
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(Surface)
 	void configure(const SurfaceConfiguration& config) const;
-	void getCapabilities(Adapter adapter, SurfaceCapabilities * capabilities) const;
+	Status getCapabilities(Adapter adapter, SurfaceCapabilities * capabilities) const;
 	void getCurrentTexture(SurfaceTexture * surfaceTexture) const;
-	TextureFormat getPreferredFormat(Adapter adapter) const;
-	void present() const;
+	Status present() const;
+	void setLabel(StringView label) const;
 	void unconfigure() const;
-	void reference() const;
-	void release() const;
-END
-
-HANDLE(SwapChain)
-	Texture getCurrentTexture() const;
-	TextureView getCurrentTextureView() const;
-	void present() const;
-	void reference() const;
+	void addRef() const;
 	void release() const;
 END
 
@@ -1319,16 +1545,16 @@ HANDLE(Texture)
 	uint32_t getHeight() const;
 	uint32_t getMipLevelCount() const;
 	uint32_t getSampleCount() const;
-	TextureUsageFlags getUsage() const;
+	TextureUsage getUsage() const;
 	uint32_t getWidth() const;
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
 HANDLE(TextureView)
-	void setLabel(char const * label) const;
-	void reference() const;
+	void setLabel(StringView label) const;
+	void addRef() const;
 	void release() const;
 END
 
@@ -1350,578 +1576,586 @@ Instance createInstance(const InstanceDescriptor& descriptor) {
 }
 
 // Handles members implementation
-// Methods of ChainedStruct
-void ChainedStruct::setDefault() {
+// Methods of StringView
+void StringView::setDefault() {
+	*this = WGPUStringView WGPU_STRING_VIEW_INIT;
 }
 
 
-// Methods of ChainedStructOut
-void ChainedStructOut::setDefault() {
+// Methods of ChainedStruct
+void ChainedStruct::setDefault() {
+	*this = WGPUChainedStruct {};
+}
+
+
+// Methods of BufferMapCallbackInfo
+void BufferMapCallbackInfo::setDefault() {
+	*this = WGPUBufferMapCallbackInfo WGPU_BUFFER_MAP_CALLBACK_INFO_INIT;
+}
+
+
+// Methods of CompilationInfoCallbackInfo
+void CompilationInfoCallbackInfo::setDefault() {
+	*this = WGPUCompilationInfoCallbackInfo WGPU_COMPILATION_INFO_CALLBACK_INFO_INIT;
+}
+
+
+// Methods of CreateComputePipelineAsyncCallbackInfo
+void CreateComputePipelineAsyncCallbackInfo::setDefault() {
+	*this = WGPUCreateComputePipelineAsyncCallbackInfo WGPU_CREATE_COMPUTE_PIPELINE_ASYNC_CALLBACK_INFO_INIT;
+}
+
+
+// Methods of CreateRenderPipelineAsyncCallbackInfo
+void CreateRenderPipelineAsyncCallbackInfo::setDefault() {
+	*this = WGPUCreateRenderPipelineAsyncCallbackInfo WGPU_CREATE_RENDER_PIPELINE_ASYNC_CALLBACK_INFO_INIT;
+}
+
+
+// Methods of DeviceLostCallbackInfo
+void DeviceLostCallbackInfo::setDefault() {
+	*this = WGPUDeviceLostCallbackInfo WGPU_DEVICE_LOST_CALLBACK_INFO_INIT;
+}
+
+
+// Methods of PopErrorScopeCallbackInfo
+void PopErrorScopeCallbackInfo::setDefault() {
+	*this = WGPUPopErrorScopeCallbackInfo WGPU_POP_ERROR_SCOPE_CALLBACK_INFO_INIT;
+}
+
+
+// Methods of QueueWorkDoneCallbackInfo
+void QueueWorkDoneCallbackInfo::setDefault() {
+	*this = WGPUQueueWorkDoneCallbackInfo WGPU_QUEUE_WORK_DONE_CALLBACK_INFO_INIT;
+}
+
+
+// Methods of RequestAdapterCallbackInfo
+void RequestAdapterCallbackInfo::setDefault() {
+	*this = WGPURequestAdapterCallbackInfo WGPU_REQUEST_ADAPTER_CALLBACK_INFO_INIT;
+}
+
+
+// Methods of RequestDeviceCallbackInfo
+void RequestDeviceCallbackInfo::setDefault() {
+	*this = WGPURequestDeviceCallbackInfo WGPU_REQUEST_DEVICE_CALLBACK_INFO_INIT;
+}
+
+
+// Methods of UncapturedErrorCallbackInfo
+void UncapturedErrorCallbackInfo::setDefault() {
+	*this = WGPUUncapturedErrorCallbackInfo WGPU_UNCAPTURED_ERROR_CALLBACK_INFO_INIT;
 }
 
 
 // Methods of AdapterInfo
 void AdapterInfo::setDefault() {
-	backendType = BackendType::Undefined;
+	*this = WGPUAdapterInfo WGPU_ADAPTER_INFO_INIT;
 }
 void AdapterInfo::freeMembers() {
 	return wgpuAdapterInfoFreeMembers(*this);
 }
 
 
-// Methods of AdapterProperties
-void AdapterProperties::setDefault() {
-	backendType = BackendType::Undefined;
-}
-void AdapterProperties::freeMembers() {
-	return wgpuAdapterPropertiesFreeMembers(*this);
-}
-
-
 // Methods of BindGroupEntry
 void BindGroupEntry::setDefault() {
-	offset = 0;
+	*this = WGPUBindGroupEntry WGPU_BIND_GROUP_ENTRY_INIT;
 }
 
 
 // Methods of BlendComponent
 void BlendComponent::setDefault() {
-	operation = BlendOperation::Add;
-	srcFactor = BlendFactor::One;
-	dstFactor = BlendFactor::Zero;
+	*this = WGPUBlendComponent WGPU_BLEND_COMPONENT_INIT;
 }
 
 
 // Methods of BufferBindingLayout
 void BufferBindingLayout::setDefault() {
-	type = BufferBindingType::Uniform;
-	hasDynamicOffset = false;
-	minBindingSize = 0;
+	*this = WGPUBufferBindingLayout WGPU_BUFFER_BINDING_LAYOUT_INIT;
 }
 
 
 // Methods of BufferDescriptor
 void BufferDescriptor::setDefault() {
-	mappedAtCreation = false;
-}
-
-
-// Methods of BufferMapCallbackInfo
-void BufferMapCallbackInfo::setDefault() {
+	*this = WGPUBufferDescriptor WGPU_BUFFER_DESCRIPTOR_INIT;
 }
 
 
 // Methods of Color
 void Color::setDefault() {
+	*this = WGPUColor WGPU_COLOR_INIT;
 }
 
 
 // Methods of CommandBufferDescriptor
 void CommandBufferDescriptor::setDefault() {
+	*this = WGPUCommandBufferDescriptor WGPU_COMMAND_BUFFER_DESCRIPTOR_INIT;
 }
 
 
 // Methods of CommandEncoderDescriptor
 void CommandEncoderDescriptor::setDefault() {
+	*this = WGPUCommandEncoderDescriptor WGPU_COMMAND_ENCODER_DESCRIPTOR_INIT;
 }
 
 
 // Methods of CompilationMessage
 void CompilationMessage::setDefault() {
-}
-
-
-// Methods of ComputePassTimestampWrites
-void ComputePassTimestampWrites::setDefault() {
+	*this = WGPUCompilationMessage WGPU_COMPILATION_MESSAGE_INIT;
 }
 
 
 // Methods of ConstantEntry
 void ConstantEntry::setDefault() {
+	*this = WGPUConstantEntry WGPU_CONSTANT_ENTRY_INIT;
 }
 
 
 // Methods of Extent3D
 void Extent3D::setDefault() {
-	height = 1;
-	depthOrArrayLayers = 1;
+	*this = WGPUExtent3D WGPU_EXTENT_3D_INIT;
 }
 
 
 // Methods of Future
 void Future::setDefault() {
+	*this = WGPUFuture WGPU_FUTURE_INIT;
 }
 
 
-// Methods of InstanceFeatures
-void InstanceFeatures::setDefault() {
+// Methods of InstanceLimits
+void InstanceLimits::setDefault() {
+	*this = WGPUInstanceLimits WGPU_INSTANCE_LIMITS_INIT;
 }
 
 
 // Methods of Limits
 void Limits::setDefault() {
-	maxTextureDimension1D = WGPU_LIMIT_U32_UNDEFINED;
-	maxTextureDimension2D = WGPU_LIMIT_U32_UNDEFINED;
-	maxTextureDimension3D = WGPU_LIMIT_U32_UNDEFINED;
-	maxTextureArrayLayers = WGPU_LIMIT_U32_UNDEFINED;
-	maxBindGroups = WGPU_LIMIT_U32_UNDEFINED;
-	maxBindGroupsPlusVertexBuffers = WGPU_LIMIT_U32_UNDEFINED;
-	maxBindingsPerBindGroup = WGPU_LIMIT_U32_UNDEFINED;
-	maxDynamicUniformBuffersPerPipelineLayout = WGPU_LIMIT_U32_UNDEFINED;
-	maxDynamicStorageBuffersPerPipelineLayout = WGPU_LIMIT_U32_UNDEFINED;
-	maxSampledTexturesPerShaderStage = WGPU_LIMIT_U32_UNDEFINED;
-	maxSamplersPerShaderStage = WGPU_LIMIT_U32_UNDEFINED;
-	maxStorageBuffersPerShaderStage = WGPU_LIMIT_U32_UNDEFINED;
-	maxStorageTexturesPerShaderStage = WGPU_LIMIT_U32_UNDEFINED;
-	maxUniformBuffersPerShaderStage = WGPU_LIMIT_U32_UNDEFINED;
-	maxUniformBufferBindingSize = WGPU_LIMIT_U64_UNDEFINED;
-	maxStorageBufferBindingSize = WGPU_LIMIT_U64_UNDEFINED;
-	minUniformBufferOffsetAlignment = WGPU_LIMIT_U32_UNDEFINED;
-	minStorageBufferOffsetAlignment = WGPU_LIMIT_U32_UNDEFINED;
-	maxVertexBuffers = WGPU_LIMIT_U32_UNDEFINED;
-	maxBufferSize = WGPU_LIMIT_U64_UNDEFINED;
-	maxVertexAttributes = WGPU_LIMIT_U32_UNDEFINED;
-	maxVertexBufferArrayStride = WGPU_LIMIT_U32_UNDEFINED;
-	maxInterStageShaderComponents = WGPU_LIMIT_U32_UNDEFINED;
-	maxInterStageShaderVariables = WGPU_LIMIT_U32_UNDEFINED;
-	maxColorAttachments = WGPU_LIMIT_U32_UNDEFINED;
-	maxColorAttachmentBytesPerSample = WGPU_LIMIT_U32_UNDEFINED;
-	maxComputeWorkgroupStorageSize = WGPU_LIMIT_U32_UNDEFINED;
-	maxComputeInvocationsPerWorkgroup = WGPU_LIMIT_U32_UNDEFINED;
-	maxComputeWorkgroupSizeX = WGPU_LIMIT_U32_UNDEFINED;
-	maxComputeWorkgroupSizeY = WGPU_LIMIT_U32_UNDEFINED;
-	maxComputeWorkgroupSizeZ = WGPU_LIMIT_U32_UNDEFINED;
-	maxComputeWorkgroupsPerDimension = WGPU_LIMIT_U32_UNDEFINED;
+	*this = WGPULimits WGPU_LIMITS_INIT;
 }
 
 
 // Methods of MultisampleState
 void MultisampleState::setDefault() {
-	count = 1;
-	mask = 0xFFFFFFFF;
-	alphaToCoverageEnabled = false;
+	*this = WGPUMultisampleState WGPU_MULTISAMPLE_STATE_INIT;
 }
 
 
 // Methods of Origin3D
 void Origin3D::setDefault() {
-	x = 0;
-	y = 0;
-	z = 0;
+	*this = WGPUOrigin3D WGPU_ORIGIN_3D_INIT;
+}
+
+
+// Methods of PassTimestampWrites
+void PassTimestampWrites::setDefault() {
+	*this = WGPUPassTimestampWrites WGPU_PASS_TIMESTAMP_WRITES_INIT;
 }
 
 
 // Methods of PipelineLayoutDescriptor
 void PipelineLayoutDescriptor::setDefault() {
-}
-
-
-// Methods of PrimitiveDepthClipControl
-void PrimitiveDepthClipControl::setDefault() {
-	((ChainedStruct*)&chain)->setDefault();
-	chain.sType = SType::PrimitiveDepthClipControl;
-	chain.next = nullptr;
+	*this = WGPUPipelineLayoutDescriptor WGPU_PIPELINE_LAYOUT_DESCRIPTOR_INIT;
 }
 
 
 // Methods of PrimitiveState
 void PrimitiveState::setDefault() {
-	topology = PrimitiveTopology::TriangleList;
-	stripIndexFormat = IndexFormat::Undefined;
-	frontFace = FrontFace::CCW;
-	cullMode = CullMode::None;
+	*this = WGPUPrimitiveState WGPU_PRIMITIVE_STATE_INIT;
 }
 
 
 // Methods of QuerySetDescriptor
 void QuerySetDescriptor::setDefault() {
+	*this = WGPUQuerySetDescriptor WGPU_QUERY_SET_DESCRIPTOR_INIT;
 }
 
 
 // Methods of QueueDescriptor
 void QueueDescriptor::setDefault() {
-}
-
-
-// Methods of QueueWorkDoneCallbackInfo
-void QueueWorkDoneCallbackInfo::setDefault() {
+	*this = WGPUQueueDescriptor WGPU_QUEUE_DESCRIPTOR_INIT;
 }
 
 
 // Methods of RenderBundleDescriptor
 void RenderBundleDescriptor::setDefault() {
+	*this = WGPURenderBundleDescriptor WGPU_RENDER_BUNDLE_DESCRIPTOR_INIT;
 }
 
 
 // Methods of RenderBundleEncoderDescriptor
 void RenderBundleEncoderDescriptor::setDefault() {
-	depthStencilFormat = TextureFormat::Undefined;
-	depthReadOnly = false;
-	stencilReadOnly = false;
-	sampleCount = 1;
+	*this = WGPURenderBundleEncoderDescriptor WGPU_RENDER_BUNDLE_ENCODER_DESCRIPTOR_INIT;
 }
 
 
 // Methods of RenderPassDepthStencilAttachment
 void RenderPassDepthStencilAttachment::setDefault() {
-	depthLoadOp = LoadOp::Undefined;
-	depthStoreOp = StoreOp::Undefined;
-	depthReadOnly = false;
-	stencilLoadOp = LoadOp::Undefined;
-	stencilStoreOp = StoreOp::Undefined;
-	stencilClearValue = 0;
-	stencilReadOnly = false;
+	*this = WGPURenderPassDepthStencilAttachment WGPU_RENDER_PASS_DEPTH_STENCIL_ATTACHMENT_INIT;
 }
 
 
-// Methods of RenderPassDescriptorMaxDrawCount
-void RenderPassDescriptorMaxDrawCount::setDefault() {
-	((ChainedStruct*)&chain)->setDefault();
-	chain.sType = SType::RenderPassDescriptorMaxDrawCount;
+// Methods of RenderPassMaxDrawCount
+void RenderPassMaxDrawCount::setDefault() {
+	*this = WGPURenderPassMaxDrawCount WGPU_RENDER_PASS_MAX_DRAW_COUNT_INIT;
+	chain.sType = SType::RenderPassMaxDrawCount;
 	chain.next = nullptr;
 }
 
 
-// Methods of RenderPassTimestampWrites
-void RenderPassTimestampWrites::setDefault() {
-}
-
-
-// Methods of RequestAdapterCallbackInfo
-void RequestAdapterCallbackInfo::setDefault() {
-}
-
-
-// Methods of RequestAdapterOptions
-void RequestAdapterOptions::setDefault() {
-	powerPreference = PowerPreference::Undefined;
-	backendType = BackendType::Undefined;
-	forceFallbackAdapter = false;
+// Methods of RequestAdapterWebXROptions
+void RequestAdapterWebXROptions::setDefault() {
+	*this = WGPURequestAdapterWebXROptions {};
+	chain.sType = SType::RequestAdapterWebXROptions;
+	chain.next = nullptr;
 }
 
 
 // Methods of SamplerBindingLayout
 void SamplerBindingLayout::setDefault() {
-	type = SamplerBindingType::Filtering;
+	*this = WGPUSamplerBindingLayout WGPU_SAMPLER_BINDING_LAYOUT_INIT;
 }
 
 
 // Methods of SamplerDescriptor
 void SamplerDescriptor::setDefault() {
-	addressModeU = AddressMode::ClampToEdge;
-	addressModeV = AddressMode::ClampToEdge;
-	addressModeW = AddressMode::ClampToEdge;
-	magFilter = FilterMode::Nearest;
-	minFilter = FilterMode::Nearest;
-	mipmapFilter = MipmapFilterMode::Nearest;
-	lodMinClamp = 0;
-	lodMaxClamp = 32;
-	compare = CompareFunction::Undefined;
+	*this = WGPUSamplerDescriptor WGPU_SAMPLER_DESCRIPTOR_INIT;
 }
 
 
-// Methods of ShaderModuleSPIRVDescriptor
-void ShaderModuleSPIRVDescriptor::setDefault() {
-	((ChainedStruct*)&chain)->setDefault();
-	chain.sType = SType::ShaderModuleSPIRVDescriptor;
+// Methods of ShaderSourceSPIRV
+void ShaderSourceSPIRV::setDefault() {
+	*this = WGPUShaderSourceSPIRV WGPU_SHADER_SOURCE_SPIRV_INIT;
+	chain.sType = SType::ShaderSourceSPIRV;
 	chain.next = nullptr;
 }
 
 
-// Methods of ShaderModuleWGSLDescriptor
-void ShaderModuleWGSLDescriptor::setDefault() {
-	((ChainedStruct*)&chain)->setDefault();
-	chain.sType = SType::ShaderModuleWGSLDescriptor;
+// Methods of ShaderSourceWGSL
+void ShaderSourceWGSL::setDefault() {
+	*this = WGPUShaderSourceWGSL WGPU_SHADER_SOURCE_WGSL_INIT;
+	chain.sType = SType::ShaderSourceWGSL;
 	chain.next = nullptr;
-}
-
-
-// Methods of ShaderModuleDescriptor
-void ShaderModuleDescriptor::setDefault() {
 }
 
 
 // Methods of StencilFaceState
 void StencilFaceState::setDefault() {
-	compare = CompareFunction::Always;
-	failOp = StencilOperation::Keep;
-	depthFailOp = StencilOperation::Keep;
-	passOp = StencilOperation::Keep;
+	*this = WGPUStencilFaceState WGPU_STENCIL_FACE_STATE_INIT;
 }
 
 
 // Methods of StorageTextureBindingLayout
 void StorageTextureBindingLayout::setDefault() {
-	access = StorageTextureAccess::WriteOnly;
-	format = TextureFormat::Undefined;
-	viewDimension = TextureViewDimension::_2D;
+	*this = WGPUStorageTextureBindingLayout WGPU_STORAGE_TEXTURE_BINDING_LAYOUT_INIT;
+}
+
+
+// Methods of SupportedFeatures
+void SupportedFeatures::setDefault() {
+	*this = WGPUSupportedFeatures WGPU_SUPPORTED_FEATURES_INIT;
+}
+void SupportedFeatures::freeMembers() {
+	return wgpuSupportedFeaturesFreeMembers(*this);
+}
+
+
+// Methods of SupportedInstanceFeatures
+void SupportedInstanceFeatures::setDefault() {
+	*this = WGPUSupportedInstanceFeatures WGPU_SUPPORTED_INSTANCE_FEATURES_INIT;
+}
+void SupportedInstanceFeatures::freeMembers() {
+	return wgpuSupportedInstanceFeaturesFreeMembers(*this);
+}
+
+
+// Methods of SupportedWGSLLanguageFeatures
+void SupportedWGSLLanguageFeatures::setDefault() {
+	*this = WGPUSupportedWGSLLanguageFeatures WGPU_SUPPORTED_WGSL_LANGUAGE_FEATURES_INIT;
+}
+void SupportedWGSLLanguageFeatures::freeMembers() {
+	return wgpuSupportedWGSLLanguageFeaturesFreeMembers(*this);
 }
 
 
 // Methods of SurfaceCapabilities
 void SurfaceCapabilities::setDefault() {
+	*this = WGPUSurfaceCapabilities WGPU_SURFACE_CAPABILITIES_INIT;
 }
 void SurfaceCapabilities::freeMembers() {
 	return wgpuSurfaceCapabilitiesFreeMembers(*this);
 }
 
 
+// Methods of SurfaceColorManagement
+void SurfaceColorManagement::setDefault() {
+	*this = WGPUSurfaceColorManagement WGPU_SURFACE_COLOR_MANAGEMENT_INIT;
+	chain.sType = SType::SurfaceColorManagement;
+	chain.next = nullptr;
+}
+
+
 // Methods of SurfaceConfiguration
 void SurfaceConfiguration::setDefault() {
-	format = TextureFormat::Undefined;
+	*this = WGPUSurfaceConfiguration WGPU_SURFACE_CONFIGURATION_INIT;
 }
 
 
-// Methods of SurfaceDescriptor
-void SurfaceDescriptor::setDefault() {
+// Methods of SurfaceSourceAndroidNativeWindow
+void SurfaceSourceAndroidNativeWindow::setDefault() {
+	*this = WGPUSurfaceSourceAndroidNativeWindow WGPU_SURFACE_SOURCE_ANDROID_NATIVE_WINDOW_INIT;
+	chain.sType = SType::SurfaceSourceAndroidNativeWindow;
+	chain.next = nullptr;
 }
 
 
-// Methods of SurfaceDescriptorFromCanvasHTMLSelector
-void SurfaceDescriptorFromCanvasHTMLSelector::setDefault() {
-	((ChainedStruct*)&chain)->setDefault();
-	chain.sType = SType::SurfaceDescriptorFromCanvasHTMLSelector;
+// Methods of SurfaceSourceMetalLayer
+void SurfaceSourceMetalLayer::setDefault() {
+	*this = WGPUSurfaceSourceMetalLayer WGPU_SURFACE_SOURCE_METAL_LAYER_INIT;
+	chain.sType = SType::SurfaceSourceMetalLayer;
+	chain.next = nullptr;
+}
+
+
+// Methods of SurfaceSourceWaylandSurface
+void SurfaceSourceWaylandSurface::setDefault() {
+	*this = WGPUSurfaceSourceWaylandSurface WGPU_SURFACE_SOURCE_WAYLAND_SURFACE_INIT;
+	chain.sType = SType::SurfaceSourceWaylandSurface;
+	chain.next = nullptr;
+}
+
+
+// Methods of SurfaceSourceWindowsHWND
+void SurfaceSourceWindowsHWND::setDefault() {
+	*this = WGPUSurfaceSourceWindowsHWND WGPU_SURFACE_SOURCE_WINDOWS_HWND_INIT;
+	chain.sType = SType::SurfaceSourceWindowsHWND;
+	chain.next = nullptr;
+}
+
+
+// Methods of SurfaceSourceXCBWindow
+void SurfaceSourceXCBWindow::setDefault() {
+	*this = WGPUSurfaceSourceXCBWindow WGPU_SURFACE_SOURCE_XCB_WINDOW_INIT;
+	chain.sType = SType::SurfaceSourceXCBWindow;
+	chain.next = nullptr;
+}
+
+
+// Methods of SurfaceSourceXlibWindow
+void SurfaceSourceXlibWindow::setDefault() {
+	*this = WGPUSurfaceSourceXlibWindow WGPU_SURFACE_SOURCE_XLIB_WINDOW_INIT;
+	chain.sType = SType::SurfaceSourceXlibWindow;
 	chain.next = nullptr;
 }
 
 
 // Methods of SurfaceTexture
 void SurfaceTexture::setDefault() {
+	*this = WGPUSurfaceTexture WGPU_SURFACE_TEXTURE_INIT;
 }
 
 
-// Methods of SwapChainDescriptor
-void SwapChainDescriptor::setDefault() {
-	format = TextureFormat::Undefined;
+// Methods of TexelCopyBufferLayout
+void TexelCopyBufferLayout::setDefault() {
+	*this = WGPUTexelCopyBufferLayout WGPU_TEXEL_COPY_BUFFER_LAYOUT_INIT;
 }
 
 
 // Methods of TextureBindingLayout
 void TextureBindingLayout::setDefault() {
-	sampleType = TextureSampleType::Float;
-	viewDimension = TextureViewDimension::_2D;
-	multisampled = false;
+	*this = WGPUTextureBindingLayout WGPU_TEXTURE_BINDING_LAYOUT_INIT;
 }
 
 
-// Methods of TextureBindingViewDimensionDescriptor
-void TextureBindingViewDimensionDescriptor::setDefault() {
-	textureBindingViewDimension = TextureViewDimension::Undefined;
-	((ChainedStruct*)&chain)->setDefault();
-	chain.sType = SType::TextureBindingViewDimensionDescriptor;
-	chain.next = nullptr;
-}
-
-
-// Methods of TextureDataLayout
-void TextureDataLayout::setDefault() {
+// Methods of TextureComponentSwizzle
+void TextureComponentSwizzle::setDefault() {
+	*this = WGPUTextureComponentSwizzle WGPU_TEXTURE_COMPONENT_SWIZZLE_INIT;
 }
 
 
 // Methods of TextureViewDescriptor
 void TextureViewDescriptor::setDefault() {
-	format = TextureFormat::Undefined;
-	dimension = TextureViewDimension::Undefined;
-	baseMipLevel = 0;
-	baseArrayLayer = 0;
-	aspect = TextureAspect::All;
+	*this = WGPUTextureViewDescriptor WGPU_TEXTURE_VIEW_DESCRIPTOR_INIT;
 }
 
 
 // Methods of VertexAttribute
 void VertexAttribute::setDefault() {
-	format = VertexFormat::Undefined;
+	*this = WGPUVertexAttribute WGPU_VERTEX_ATTRIBUTE_INIT;
 }
 
 
 // Methods of BindGroupDescriptor
 void BindGroupDescriptor::setDefault() {
+	*this = WGPUBindGroupDescriptor WGPU_BIND_GROUP_DESCRIPTOR_INIT;
 }
 
 
 // Methods of BindGroupLayoutEntry
 void BindGroupLayoutEntry::setDefault() {
-	((BufferBindingLayout*)&buffer)->setDefault();
-	((SamplerBindingLayout*)&sampler)->setDefault();
-	((TextureBindingLayout*)&texture)->setDefault();
-	((StorageTextureBindingLayout*)&storageTexture)->setDefault();
-	buffer.type = BufferBindingType::Undefined;
-	sampler.type = SamplerBindingType::Undefined;
-	storageTexture.access = StorageTextureAccess::Undefined;
-	texture.sampleType = TextureSampleType::Undefined;
+	*this = WGPUBindGroupLayoutEntry WGPU_BIND_GROUP_LAYOUT_ENTRY_INIT;
 }
 
 
 // Methods of BlendState
 void BlendState::setDefault() {
-	((BlendComponent*)&color)->setDefault();
-	((BlendComponent*)&alpha)->setDefault();
+	*this = WGPUBlendState WGPU_BLEND_STATE_INIT;
 }
 
 
 // Methods of CompilationInfo
 void CompilationInfo::setDefault() {
+	*this = WGPUCompilationInfo WGPU_COMPILATION_INFO_INIT;
 }
 
 
 // Methods of ComputePassDescriptor
 void ComputePassDescriptor::setDefault() {
+	*this = WGPUComputePassDescriptor WGPU_COMPUTE_PASS_DESCRIPTOR_INIT;
+}
+
+
+// Methods of ComputeState
+void ComputeState::setDefault() {
+	*this = WGPUComputeState WGPU_COMPUTE_STATE_INIT;
 }
 
 
 // Methods of DepthStencilState
 void DepthStencilState::setDefault() {
-	format = TextureFormat::Undefined;
-	depthCompare = CompareFunction::Undefined;
-	stencilReadMask = 0xFFFFFFFF;
-	stencilWriteMask = 0xFFFFFFFF;
-	depthBias = 0;
-	depthBiasSlopeScale = 0;
-	depthBiasClamp = 0;
-	((StencilFaceState*)&stencilFront)->setDefault();
-	((StencilFaceState*)&stencilBack)->setDefault();
-}
-
-
-// Methods of FutureWaitInfo
-void FutureWaitInfo::setDefault() {
-	((Future*)&future)->setDefault();
-}
-
-
-// Methods of ImageCopyBuffer
-void ImageCopyBuffer::setDefault() {
-	((TextureDataLayout*)&layout)->setDefault();
-}
-
-
-// Methods of ImageCopyTexture
-void ImageCopyTexture::setDefault() {
-	aspect = TextureAspect::Undefined;
-	((Origin3D*)&origin)->setDefault();
-}
-
-
-// Methods of InstanceDescriptor
-void InstanceDescriptor::setDefault() {
-	((InstanceFeatures*)&features)->setDefault();
-}
-
-
-// Methods of ProgrammableStageDescriptor
-void ProgrammableStageDescriptor::setDefault() {
-}
-
-
-// Methods of RenderPassColorAttachment
-void RenderPassColorAttachment::setDefault() {
-	loadOp = LoadOp::Undefined;
-	storeOp = StoreOp::Undefined;
-	((Color*)&clearValue)->setDefault();
-}
-
-
-// Methods of RequiredLimits
-void RequiredLimits::setDefault() {
-	((Limits*)&limits)->setDefault();
-}
-
-
-// Methods of SupportedLimits
-void SupportedLimits::setDefault() {
-	((Limits*)&limits)->setDefault();
-}
-
-
-// Methods of TextureDescriptor
-void TextureDescriptor::setDefault() {
-	dimension = TextureDimension::_2D;
-	format = TextureFormat::Undefined;
-	mipLevelCount = 1;
-	sampleCount = 1;
-	((Extent3D*)&size)->setDefault();
-}
-
-
-// Methods of VertexBufferLayout
-void VertexBufferLayout::setDefault() {
-	stepMode = VertexStepMode::Vertex;
-}
-
-
-// Methods of BindGroupLayoutDescriptor
-void BindGroupLayoutDescriptor::setDefault() {
-}
-
-
-// Methods of ColorTargetState
-void ColorTargetState::setDefault() {
-	format = TextureFormat::Undefined;
-}
-
-
-// Methods of ComputePipelineDescriptor
-void ComputePipelineDescriptor::setDefault() {
-	((ProgrammableStageDescriptor*)&compute)->setDefault();
+	*this = WGPUDepthStencilState WGPU_DEPTH_STENCIL_STATE_INIT;
 }
 
 
 // Methods of DeviceDescriptor
 void DeviceDescriptor::setDefault() {
-	((QueueDescriptor*)&defaultQueue)->setDefault();
+	*this = WGPUDeviceDescriptor WGPU_DEVICE_DESCRIPTOR_INIT;
+}
+
+
+// Methods of FutureWaitInfo
+void FutureWaitInfo::setDefault() {
+	*this = WGPUFutureWaitInfo WGPU_FUTURE_WAIT_INFO_INIT;
+}
+
+
+// Methods of InstanceDescriptor
+void InstanceDescriptor::setDefault() {
+	*this = WGPUInstanceDescriptor WGPU_INSTANCE_DESCRIPTOR_INIT;
+}
+
+
+// Methods of RenderPassColorAttachment
+void RenderPassColorAttachment::setDefault() {
+	*this = WGPURenderPassColorAttachment WGPU_RENDER_PASS_COLOR_ATTACHMENT_INIT;
+}
+
+
+// Methods of RequestAdapterOptions
+void RequestAdapterOptions::setDefault() {
+	*this = WGPURequestAdapterOptions WGPU_REQUEST_ADAPTER_OPTIONS_INIT;
+}
+
+
+// Methods of ShaderModuleDescriptor
+void ShaderModuleDescriptor::setDefault() {
+	*this = WGPUShaderModuleDescriptor WGPU_SHADER_MODULE_DESCRIPTOR_INIT;
+}
+
+
+// Methods of SurfaceDescriptor
+void SurfaceDescriptor::setDefault() {
+	*this = WGPUSurfaceDescriptor WGPU_SURFACE_DESCRIPTOR_INIT;
+}
+
+
+// Methods of TexelCopyBufferInfo
+void TexelCopyBufferInfo::setDefault() {
+	*this = WGPUTexelCopyBufferInfo WGPU_TEXEL_COPY_BUFFER_INFO_INIT;
+}
+
+
+// Methods of TexelCopyTextureInfo
+void TexelCopyTextureInfo::setDefault() {
+	*this = WGPUTexelCopyTextureInfo WGPU_TEXEL_COPY_TEXTURE_INFO_INIT;
+}
+
+
+// Methods of TextureComponentSwizzleDescriptor
+void TextureComponentSwizzleDescriptor::setDefault() {
+	*this = WGPUTextureComponentSwizzleDescriptor WGPU_TEXTURE_COMPONENT_SWIZZLE_DESCRIPTOR_INIT;
+}
+
+
+// Methods of TextureDescriptor
+void TextureDescriptor::setDefault() {
+	*this = WGPUTextureDescriptor WGPU_TEXTURE_DESCRIPTOR_INIT;
+}
+
+
+// Methods of VertexBufferLayout
+void VertexBufferLayout::setDefault() {
+	*this = WGPUVertexBufferLayout WGPU_VERTEX_BUFFER_LAYOUT_INIT;
+}
+
+
+// Methods of BindGroupLayoutDescriptor
+void BindGroupLayoutDescriptor::setDefault() {
+	*this = WGPUBindGroupLayoutDescriptor WGPU_BIND_GROUP_LAYOUT_DESCRIPTOR_INIT;
+}
+
+
+// Methods of ColorTargetState
+void ColorTargetState::setDefault() {
+	*this = WGPUColorTargetState WGPU_COLOR_TARGET_STATE_INIT;
+}
+
+
+// Methods of ComputePipelineDescriptor
+void ComputePipelineDescriptor::setDefault() {
+	*this = WGPUComputePipelineDescriptor WGPU_COMPUTE_PIPELINE_DESCRIPTOR_INIT;
 }
 
 
 // Methods of RenderPassDescriptor
 void RenderPassDescriptor::setDefault() {
+	*this = WGPURenderPassDescriptor WGPU_RENDER_PASS_DESCRIPTOR_INIT;
 }
 
 
 // Methods of VertexState
 void VertexState::setDefault() {
+	*this = WGPUVertexState WGPU_VERTEX_STATE_INIT;
 }
 
 
 // Methods of FragmentState
 void FragmentState::setDefault() {
+	*this = WGPUFragmentState WGPU_FRAGMENT_STATE_INIT;
 }
 
 
 // Methods of RenderPipelineDescriptor
 void RenderPipelineDescriptor::setDefault() {
-	((VertexState*)&vertex)->setDefault();
-	((PrimitiveState*)&primitive)->setDefault();
-	((MultisampleState*)&multisample)->setDefault();
+	*this = WGPURenderPipelineDescriptor WGPU_RENDER_PIPELINE_DESCRIPTOR_INIT;
 }
 
 
 // Methods of Adapter
-size_t Adapter::enumerateFeatures(FeatureName * features) const {
-	return wgpuAdapterEnumerateFeatures(m_raw, reinterpret_cast<WGPUFeatureName *>(features));
+void Adapter::getFeatures(SupportedFeatures * features) const {
+	return wgpuAdapterGetFeatures(m_raw, features);
 }
-void Adapter::getInfo(AdapterInfo * info) const {
-	return wgpuAdapterGetInfo(m_raw, info);
+Status Adapter::getInfo(AdapterInfo * info) const {
+	return static_cast<Status>(wgpuAdapterGetInfo(m_raw, info));
 }
-Bool Adapter::getLimits(SupportedLimits * limits) const {
-	return wgpuAdapterGetLimits(m_raw, limits);
-}
-void Adapter::getProperties(AdapterProperties * properties) const {
-	return wgpuAdapterGetProperties(m_raw, properties);
+Status Adapter::getLimits(Limits * limits) const {
+	return static_cast<Status>(wgpuAdapterGetLimits(m_raw, limits));
 }
 Bool Adapter::hasFeature(FeatureName feature) const {
 	return wgpuAdapterHasFeature(m_raw, static_cast<WGPUFeatureName>(feature));
 }
-std::unique_ptr<RequestDeviceCallback> Adapter::requestDevice(const DeviceDescriptor& descriptor, RequestDeviceCallback&& callback) const {
-	auto handle = std::make_unique<RequestDeviceCallback>(callback);
-	static auto cCallback = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * userdata) -> void {
-		RequestDeviceCallback& callback = *reinterpret_cast<RequestDeviceCallback*>(userdata);
-		callback(static_cast<RequestDeviceStatus>(status), device, message);
-	};
-	wgpuAdapterRequestDevice(m_raw, &descriptor, cCallback, reinterpret_cast<void*>(handle.get()));
-	return handle;
-}
-void Adapter::reference() const {
-	return wgpuAdapterReference(m_raw);
+void Adapter::addRef() const {
+	return wgpuAdapterAddRef(m_raw);
 }
 void Adapter::release() const {
 	return wgpuAdapterRelease(m_raw);
@@ -1929,11 +2163,11 @@ void Adapter::release() const {
 
 
 // Methods of BindGroup
-void BindGroup::setLabel(char const * label) const {
+void BindGroup::setLabel(StringView label) const {
 	return wgpuBindGroupSetLabel(m_raw, label);
 }
-void BindGroup::reference() const {
-	return wgpuBindGroupReference(m_raw);
+void BindGroup::addRef() const {
+	return wgpuBindGroupAddRef(m_raw);
 }
 void BindGroup::release() const {
 	return wgpuBindGroupRelease(m_raw);
@@ -1941,11 +2175,11 @@ void BindGroup::release() const {
 
 
 // Methods of BindGroupLayout
-void BindGroupLayout::setLabel(char const * label) const {
+void BindGroupLayout::setLabel(StringView label) const {
 	return wgpuBindGroupLayoutSetLabel(m_raw, label);
 }
-void BindGroupLayout::reference() const {
-	return wgpuBindGroupLayoutReference(m_raw);
+void BindGroupLayout::addRef() const {
+	return wgpuBindGroupLayoutAddRef(m_raw);
 }
 void BindGroupLayout::release() const {
 	return wgpuBindGroupLayoutRelease(m_raw);
@@ -1959,35 +2193,32 @@ void Buffer::destroy() const {
 void const * Buffer::getConstMappedRange(size_t offset, size_t size) const {
 	return wgpuBufferGetConstMappedRange(m_raw, offset, size);
 }
-BufferMapState Buffer::getMapState() const {
-	return static_cast<BufferMapState>(wgpuBufferGetMapState(m_raw));
-}
 void * Buffer::getMappedRange(size_t offset, size_t size) const {
 	return wgpuBufferGetMappedRange(m_raw, offset, size);
+}
+BufferMapState Buffer::getMapState() const {
+	return static_cast<BufferMapState>(wgpuBufferGetMapState(m_raw));
 }
 uint64_t Buffer::getSize() const {
 	return wgpuBufferGetSize(m_raw);
 }
-BufferUsageFlags Buffer::getUsage() const {
-	return wgpuBufferGetUsage(m_raw);
+BufferUsage Buffer::getUsage() const {
+	return static_cast<BufferUsage>(wgpuBufferGetUsage(m_raw));
 }
-std::unique_ptr<BufferMapCallback> Buffer::mapAsync(MapModeFlags mode, size_t offset, size_t size, BufferMapCallback&& callback) const {
-	auto handle = std::make_unique<BufferMapCallback>(callback);
-	static auto cCallback = [](WGPUBufferMapAsyncStatus status, void * userdata) -> void {
-		BufferMapCallback& callback = *reinterpret_cast<BufferMapCallback*>(userdata);
-		callback(static_cast<BufferMapAsyncStatus>(status));
-	};
-	wgpuBufferMapAsync(m_raw, mode, offset, size, cCallback, reinterpret_cast<void*>(handle.get()));
-	return handle;
+Status Buffer::readMappedRange(size_t offset, void * data, size_t size) const {
+	return static_cast<Status>(wgpuBufferReadMappedRange(m_raw, offset, data, size));
 }
-void Buffer::setLabel(char const * label) const {
+void Buffer::setLabel(StringView label) const {
 	return wgpuBufferSetLabel(m_raw, label);
 }
 void Buffer::unmap() const {
 	return wgpuBufferUnmap(m_raw);
 }
-void Buffer::reference() const {
-	return wgpuBufferReference(m_raw);
+Status Buffer::writeMappedRange(size_t offset, void const * data, size_t size) const {
+	return static_cast<Status>(wgpuBufferWriteMappedRange(m_raw, offset, data, size));
+}
+void Buffer::addRef() const {
+	return wgpuBufferAddRef(m_raw);
 }
 void Buffer::release() const {
 	return wgpuBufferRelease(m_raw);
@@ -1995,11 +2226,11 @@ void Buffer::release() const {
 
 
 // Methods of CommandBuffer
-void CommandBuffer::setLabel(char const * label) const {
+void CommandBuffer::setLabel(StringView label) const {
 	return wgpuCommandBufferSetLabel(m_raw, label);
 }
-void CommandBuffer::reference() const {
-	return wgpuCommandBufferReference(m_raw);
+void CommandBuffer::addRef() const {
+	return wgpuCommandBufferAddRef(m_raw);
 }
 void CommandBuffer::release() const {
 	return wgpuCommandBufferRelease(m_raw);
@@ -2022,13 +2253,13 @@ void CommandEncoder::clearBuffer(Buffer buffer, uint64_t offset, uint64_t size) 
 void CommandEncoder::copyBufferToBuffer(Buffer source, uint64_t sourceOffset, Buffer destination, uint64_t destinationOffset, uint64_t size) const {
 	return wgpuCommandEncoderCopyBufferToBuffer(m_raw, source, sourceOffset, destination, destinationOffset, size);
 }
-void CommandEncoder::copyBufferToTexture(const ImageCopyBuffer& source, const ImageCopyTexture& destination, const Extent3D& copySize) const {
+void CommandEncoder::copyBufferToTexture(const TexelCopyBufferInfo& source, const TexelCopyTextureInfo& destination, const Extent3D& copySize) const {
 	return wgpuCommandEncoderCopyBufferToTexture(m_raw, &source, &destination, &copySize);
 }
-void CommandEncoder::copyTextureToBuffer(const ImageCopyTexture& source, const ImageCopyBuffer& destination, const Extent3D& copySize) const {
+void CommandEncoder::copyTextureToBuffer(const TexelCopyTextureInfo& source, const TexelCopyBufferInfo& destination, const Extent3D& copySize) const {
 	return wgpuCommandEncoderCopyTextureToBuffer(m_raw, &source, &destination, &copySize);
 }
-void CommandEncoder::copyTextureToTexture(const ImageCopyTexture& source, const ImageCopyTexture& destination, const Extent3D& copySize) const {
+void CommandEncoder::copyTextureToTexture(const TexelCopyTextureInfo& source, const TexelCopyTextureInfo& destination, const Extent3D& copySize) const {
 	return wgpuCommandEncoderCopyTextureToTexture(m_raw, &source, &destination, &copySize);
 }
 CommandBuffer CommandEncoder::finish(const CommandBufferDescriptor& descriptor) const {
@@ -2037,26 +2268,26 @@ CommandBuffer CommandEncoder::finish(const CommandBufferDescriptor& descriptor) 
 CommandBuffer CommandEncoder::finish() const {
 	return wgpuCommandEncoderFinish(m_raw, nullptr);
 }
-void CommandEncoder::insertDebugMarker(char const * markerLabel) const {
+void CommandEncoder::insertDebugMarker(StringView markerLabel) const {
 	return wgpuCommandEncoderInsertDebugMarker(m_raw, markerLabel);
 }
 void CommandEncoder::popDebugGroup() const {
 	return wgpuCommandEncoderPopDebugGroup(m_raw);
 }
-void CommandEncoder::pushDebugGroup(char const * groupLabel) const {
+void CommandEncoder::pushDebugGroup(StringView groupLabel) const {
 	return wgpuCommandEncoderPushDebugGroup(m_raw, groupLabel);
 }
 void CommandEncoder::resolveQuerySet(QuerySet querySet, uint32_t firstQuery, uint32_t queryCount, Buffer destination, uint64_t destinationOffset) const {
 	return wgpuCommandEncoderResolveQuerySet(m_raw, querySet, firstQuery, queryCount, destination, destinationOffset);
 }
-void CommandEncoder::setLabel(char const * label) const {
+void CommandEncoder::setLabel(StringView label) const {
 	return wgpuCommandEncoderSetLabel(m_raw, label);
 }
 void CommandEncoder::writeTimestamp(QuerySet querySet, uint32_t queryIndex) const {
 	return wgpuCommandEncoderWriteTimestamp(m_raw, querySet, queryIndex);
 }
-void CommandEncoder::reference() const {
-	return wgpuCommandEncoderReference(m_raw);
+void CommandEncoder::addRef() const {
+	return wgpuCommandEncoderAddRef(m_raw);
 }
 void CommandEncoder::release() const {
 	return wgpuCommandEncoderRelease(m_raw);
@@ -2073,13 +2304,13 @@ void ComputePassEncoder::dispatchWorkgroupsIndirect(Buffer indirectBuffer, uint6
 void ComputePassEncoder::end() const {
 	return wgpuComputePassEncoderEnd(m_raw);
 }
-void ComputePassEncoder::insertDebugMarker(char const * markerLabel) const {
+void ComputePassEncoder::insertDebugMarker(StringView markerLabel) const {
 	return wgpuComputePassEncoderInsertDebugMarker(m_raw, markerLabel);
 }
 void ComputePassEncoder::popDebugGroup() const {
 	return wgpuComputePassEncoderPopDebugGroup(m_raw);
 }
-void ComputePassEncoder::pushDebugGroup(char const * groupLabel) const {
+void ComputePassEncoder::pushDebugGroup(StringView groupLabel) const {
 	return wgpuComputePassEncoderPushDebugGroup(m_raw, groupLabel);
 }
 void ComputePassEncoder::setBindGroup(uint32_t groupIndex, BindGroup group, size_t dynamicOffsetCount, uint32_t const * dynamicOffsets) const {
@@ -2091,17 +2322,14 @@ void ComputePassEncoder::setBindGroup(uint32_t groupIndex, BindGroup group, cons
 void ComputePassEncoder::setBindGroup(uint32_t groupIndex, BindGroup group, const uint32_t& dynamicOffsets) const {
 	return wgpuComputePassEncoderSetBindGroup(m_raw, groupIndex, group, 1, &dynamicOffsets);
 }
-void ComputePassEncoder::setLabel(char const * label) const {
+void ComputePassEncoder::setLabel(StringView label) const {
 	return wgpuComputePassEncoderSetLabel(m_raw, label);
 }
 void ComputePassEncoder::setPipeline(ComputePipeline pipeline) const {
 	return wgpuComputePassEncoderSetPipeline(m_raw, pipeline);
 }
-void ComputePassEncoder::writeTimestamp(QuerySet querySet, uint32_t queryIndex) const {
-	return wgpuComputePassEncoderWriteTimestamp(m_raw, querySet, queryIndex);
-}
-void ComputePassEncoder::reference() const {
-	return wgpuComputePassEncoderReference(m_raw);
+void ComputePassEncoder::addRef() const {
+	return wgpuComputePassEncoderAddRef(m_raw);
 }
 void ComputePassEncoder::release() const {
 	return wgpuComputePassEncoderRelease(m_raw);
@@ -2112,11 +2340,11 @@ void ComputePassEncoder::release() const {
 BindGroupLayout ComputePipeline::getBindGroupLayout(uint32_t groupIndex) const {
 	return wgpuComputePipelineGetBindGroupLayout(m_raw, groupIndex);
 }
-void ComputePipeline::setLabel(char const * label) const {
+void ComputePipeline::setLabel(StringView label) const {
 	return wgpuComputePipelineSetLabel(m_raw, label);
 }
-void ComputePipeline::reference() const {
-	return wgpuComputePipelineReference(m_raw);
+void ComputePipeline::addRef() const {
+	return wgpuComputePipelineAddRef(m_raw);
 }
 void ComputePipeline::release() const {
 	return wgpuComputePipelineRelease(m_raw);
@@ -2130,7 +2358,7 @@ BindGroup Device::createBindGroup(const BindGroupDescriptor& descriptor) const {
 BindGroupLayout Device::createBindGroupLayout(const BindGroupLayoutDescriptor& descriptor) const {
 	return wgpuDeviceCreateBindGroupLayout(m_raw, &descriptor);
 }
-Buffer Device::createBuffer(const BufferDescriptor& descriptor) const {
+_NULLABLE WGPUBuffer Device::createBuffer(const BufferDescriptor& descriptor) const {
 	return wgpuDeviceCreateBuffer(m_raw, &descriptor);
 }
 CommandEncoder Device::createCommandEncoder(const CommandEncoderDescriptor& descriptor) const {
@@ -2141,15 +2369,6 @@ CommandEncoder Device::createCommandEncoder() const {
 }
 ComputePipeline Device::createComputePipeline(const ComputePipelineDescriptor& descriptor) const {
 	return wgpuDeviceCreateComputePipeline(m_raw, &descriptor);
-}
-std::unique_ptr<CreateComputePipelineAsyncCallback> Device::createComputePipelineAsync(const ComputePipelineDescriptor& descriptor, CreateComputePipelineAsyncCallback&& callback) const {
-	auto handle = std::make_unique<CreateComputePipelineAsyncCallback>(callback);
-	static auto cCallback = [](WGPUCreatePipelineAsyncStatus status, WGPUComputePipeline pipeline, char const * message, void * userdata) -> void {
-		CreateComputePipelineAsyncCallback& callback = *reinterpret_cast<CreateComputePipelineAsyncCallback*>(userdata);
-		callback(static_cast<CreatePipelineAsyncStatus>(status), pipeline, message);
-	};
-	wgpuDeviceCreateComputePipelineAsync(m_raw, &descriptor, cCallback, reinterpret_cast<void*>(handle.get()));
-	return handle;
 }
 PipelineLayout Device::createPipelineLayout(const PipelineLayoutDescriptor& descriptor) const {
 	return wgpuDeviceCreatePipelineLayout(m_raw, &descriptor);
@@ -2163,15 +2382,6 @@ RenderBundleEncoder Device::createRenderBundleEncoder(const RenderBundleEncoderD
 RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor& descriptor) const {
 	return wgpuDeviceCreateRenderPipeline(m_raw, &descriptor);
 }
-std::unique_ptr<CreateRenderPipelineAsyncCallback> Device::createRenderPipelineAsync(const RenderPipelineDescriptor& descriptor, CreateRenderPipelineAsyncCallback&& callback) const {
-	auto handle = std::make_unique<CreateRenderPipelineAsyncCallback>(callback);
-	static auto cCallback = [](WGPUCreatePipelineAsyncStatus status, WGPURenderPipeline pipeline, char const * message, void * userdata) -> void {
-		CreateRenderPipelineAsyncCallback& callback = *reinterpret_cast<CreateRenderPipelineAsyncCallback*>(userdata);
-		callback(static_cast<CreatePipelineAsyncStatus>(status), pipeline, message);
-	};
-	wgpuDeviceCreateRenderPipelineAsync(m_raw, &descriptor, cCallback, reinterpret_cast<void*>(handle.get()));
-	return handle;
-}
 Sampler Device::createSampler(const SamplerDescriptor& descriptor) const {
 	return wgpuDeviceCreateSampler(m_raw, &descriptor);
 }
@@ -2181,20 +2391,20 @@ Sampler Device::createSampler() const {
 ShaderModule Device::createShaderModule(const ShaderModuleDescriptor& descriptor) const {
 	return wgpuDeviceCreateShaderModule(m_raw, &descriptor);
 }
-SwapChain Device::createSwapChain(Surface surface, const SwapChainDescriptor& descriptor) const {
-	return wgpuDeviceCreateSwapChain(m_raw, surface, &descriptor);
-}
 Texture Device::createTexture(const TextureDescriptor& descriptor) const {
 	return wgpuDeviceCreateTexture(m_raw, &descriptor);
 }
 void Device::destroy() const {
 	return wgpuDeviceDestroy(m_raw);
 }
-size_t Device::enumerateFeatures(FeatureName * features) const {
-	return wgpuDeviceEnumerateFeatures(m_raw, reinterpret_cast<WGPUFeatureName *>(features));
+Status Device::getAdapterInfo(AdapterInfo * adapterInfo) const {
+	return static_cast<Status>(wgpuDeviceGetAdapterInfo(m_raw, adapterInfo));
 }
-Bool Device::getLimits(SupportedLimits * limits) const {
-	return wgpuDeviceGetLimits(m_raw, limits);
+void Device::getFeatures(SupportedFeatures * features) const {
+	return wgpuDeviceGetFeatures(m_raw, features);
+}
+Status Device::getLimits(Limits * limits) const {
+	return static_cast<Status>(wgpuDeviceGetLimits(m_raw, limits));
 }
 Queue Device::getQueue() const {
 	return wgpuDeviceGetQueue(m_raw);
@@ -2202,32 +2412,14 @@ Queue Device::getQueue() const {
 Bool Device::hasFeature(FeatureName feature) const {
 	return wgpuDeviceHasFeature(m_raw, static_cast<WGPUFeatureName>(feature));
 }
-std::unique_ptr<ErrorCallback> Device::popErrorScope(ErrorCallback&& callback) const {
-	auto handle = std::make_unique<ErrorCallback>(callback);
-	static auto cCallback = [](WGPUErrorType type, char const * message, void * userdata) -> void {
-		ErrorCallback& callback = *reinterpret_cast<ErrorCallback*>(userdata);
-		callback(static_cast<ErrorType>(type), message);
-	};
-	wgpuDevicePopErrorScope(m_raw, cCallback, reinterpret_cast<void*>(handle.get()));
-	return handle;
-}
 void Device::pushErrorScope(ErrorFilter filter) const {
 	return wgpuDevicePushErrorScope(m_raw, static_cast<WGPUErrorFilter>(filter));
 }
-void Device::setLabel(char const * label) const {
+void Device::setLabel(StringView label) const {
 	return wgpuDeviceSetLabel(m_raw, label);
 }
-std::unique_ptr<ErrorCallback> Device::setUncapturedErrorCallback(ErrorCallback&& callback) const {
-	auto handle = std::make_unique<ErrorCallback>(callback);
-	static auto cCallback = [](WGPUErrorType type, char const * message, void * userdata) -> void {
-		ErrorCallback& callback = *reinterpret_cast<ErrorCallback*>(userdata);
-		callback(static_cast<ErrorType>(type), message);
-	};
-	wgpuDeviceSetUncapturedErrorCallback(m_raw, cCallback, reinterpret_cast<void*>(handle.get()));
-	return handle;
-}
-void Device::reference() const {
-	return wgpuDeviceReference(m_raw);
+void Device::addRef() const {
+	return wgpuDeviceAddRef(m_raw);
 }
 void Device::release() const {
 	return wgpuDeviceRelease(m_raw);
@@ -2238,23 +2430,20 @@ void Device::release() const {
 Surface Instance::createSurface(const SurfaceDescriptor& descriptor) const {
 	return wgpuInstanceCreateSurface(m_raw, &descriptor);
 }
-Bool Instance::hasWGSLLanguageFeature(WGSLFeatureName feature) const {
-	return wgpuInstanceHasWGSLLanguageFeature(m_raw, static_cast<WGPUWGSLFeatureName>(feature));
+void Instance::getWGSLLanguageFeatures(SupportedWGSLLanguageFeatures * features) const {
+	return wgpuInstanceGetWGSLLanguageFeatures(m_raw, features);
+}
+Bool Instance::hasWGSLLanguageFeature(WGSLLanguageFeatureName feature) const {
+	return wgpuInstanceHasWGSLLanguageFeature(m_raw, static_cast<WGPUWGSLLanguageFeatureName>(feature));
 }
 void Instance::processEvents() const {
 	return wgpuInstanceProcessEvents(m_raw);
 }
-std::unique_ptr<RequestAdapterCallback> Instance::requestAdapter(const RequestAdapterOptions& options, RequestAdapterCallback&& callback) const {
-	auto handle = std::make_unique<RequestAdapterCallback>(callback);
-	static auto cCallback = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * userdata) -> void {
-		RequestAdapterCallback& callback = *reinterpret_cast<RequestAdapterCallback*>(userdata);
-		callback(static_cast<RequestAdapterStatus>(status), adapter, message);
-	};
-	wgpuInstanceRequestAdapter(m_raw, &options, cCallback, reinterpret_cast<void*>(handle.get()));
-	return handle;
+WaitStatus Instance::waitAny(size_t futureCount, FutureWaitInfo * futures, uint64_t timeoutNS) const {
+	return static_cast<WaitStatus>(wgpuInstanceWaitAny(m_raw, futureCount, futures, timeoutNS));
 }
-void Instance::reference() const {
-	return wgpuInstanceReference(m_raw);
+void Instance::addRef() const {
+	return wgpuInstanceAddRef(m_raw);
 }
 void Instance::release() const {
 	return wgpuInstanceRelease(m_raw);
@@ -2262,11 +2451,11 @@ void Instance::release() const {
 
 
 // Methods of PipelineLayout
-void PipelineLayout::setLabel(char const * label) const {
+void PipelineLayout::setLabel(StringView label) const {
 	return wgpuPipelineLayoutSetLabel(m_raw, label);
 }
-void PipelineLayout::reference() const {
-	return wgpuPipelineLayoutReference(m_raw);
+void PipelineLayout::addRef() const {
+	return wgpuPipelineLayoutAddRef(m_raw);
 }
 void PipelineLayout::release() const {
 	return wgpuPipelineLayoutRelease(m_raw);
@@ -2283,11 +2472,11 @@ uint32_t QuerySet::getCount() const {
 QueryType QuerySet::getType() const {
 	return static_cast<QueryType>(wgpuQuerySetGetType(m_raw));
 }
-void QuerySet::setLabel(char const * label) const {
+void QuerySet::setLabel(StringView label) const {
 	return wgpuQuerySetSetLabel(m_raw, label);
 }
-void QuerySet::reference() const {
-	return wgpuQuerySetReference(m_raw);
+void QuerySet::addRef() const {
+	return wgpuQuerySetAddRef(m_raw);
 }
 void QuerySet::release() const {
 	return wgpuQuerySetRelease(m_raw);
@@ -2295,16 +2484,7 @@ void QuerySet::release() const {
 
 
 // Methods of Queue
-std::unique_ptr<QueueWorkDoneCallback> Queue::onSubmittedWorkDone(QueueWorkDoneCallback&& callback) const {
-	auto handle = std::make_unique<QueueWorkDoneCallback>(callback);
-	static auto cCallback = [](WGPUQueueWorkDoneStatus status, void * userdata) -> void {
-		QueueWorkDoneCallback& callback = *reinterpret_cast<QueueWorkDoneCallback*>(userdata);
-		callback(static_cast<QueueWorkDoneStatus>(status));
-	};
-	wgpuQueueOnSubmittedWorkDone(m_raw, cCallback, reinterpret_cast<void*>(handle.get()));
-	return handle;
-}
-void Queue::setLabel(char const * label) const {
+void Queue::setLabel(StringView label) const {
 	return wgpuQueueSetLabel(m_raw, label);
 }
 void Queue::submit(size_t commandCount, CommandBuffer const * commands) const {
@@ -2319,11 +2499,11 @@ void Queue::submit(const WGPUCommandBuffer& commands) const {
 void Queue::writeBuffer(Buffer buffer, uint64_t bufferOffset, void const * data, size_t size) const {
 	return wgpuQueueWriteBuffer(m_raw, buffer, bufferOffset, data, size);
 }
-void Queue::writeTexture(const ImageCopyTexture& destination, void const * data, size_t dataSize, const TextureDataLayout& dataLayout, const Extent3D& writeSize) const {
+void Queue::writeTexture(const TexelCopyTextureInfo& destination, void const * data, size_t dataSize, const TexelCopyBufferLayout& dataLayout, const Extent3D& writeSize) const {
 	return wgpuQueueWriteTexture(m_raw, &destination, data, dataSize, &dataLayout, &writeSize);
 }
-void Queue::reference() const {
-	return wgpuQueueReference(m_raw);
+void Queue::addRef() const {
+	return wgpuQueueAddRef(m_raw);
 }
 void Queue::release() const {
 	return wgpuQueueRelease(m_raw);
@@ -2331,11 +2511,11 @@ void Queue::release() const {
 
 
 // Methods of RenderBundle
-void RenderBundle::setLabel(char const * label) const {
+void RenderBundle::setLabel(StringView label) const {
 	return wgpuRenderBundleSetLabel(m_raw, label);
 }
-void RenderBundle::reference() const {
-	return wgpuRenderBundleReference(m_raw);
+void RenderBundle::addRef() const {
+	return wgpuRenderBundleAddRef(m_raw);
 }
 void RenderBundle::release() const {
 	return wgpuRenderBundleRelease(m_raw);
@@ -2361,13 +2541,13 @@ RenderBundle RenderBundleEncoder::finish(const RenderBundleDescriptor& descripto
 RenderBundle RenderBundleEncoder::finish() const {
 	return wgpuRenderBundleEncoderFinish(m_raw, nullptr);
 }
-void RenderBundleEncoder::insertDebugMarker(char const * markerLabel) const {
+void RenderBundleEncoder::insertDebugMarker(StringView markerLabel) const {
 	return wgpuRenderBundleEncoderInsertDebugMarker(m_raw, markerLabel);
 }
 void RenderBundleEncoder::popDebugGroup() const {
 	return wgpuRenderBundleEncoderPopDebugGroup(m_raw);
 }
-void RenderBundleEncoder::pushDebugGroup(char const * groupLabel) const {
+void RenderBundleEncoder::pushDebugGroup(StringView groupLabel) const {
 	return wgpuRenderBundleEncoderPushDebugGroup(m_raw, groupLabel);
 }
 void RenderBundleEncoder::setBindGroup(uint32_t groupIndex, BindGroup group, size_t dynamicOffsetCount, uint32_t const * dynamicOffsets) const {
@@ -2382,7 +2562,7 @@ void RenderBundleEncoder::setBindGroup(uint32_t groupIndex, BindGroup group, con
 void RenderBundleEncoder::setIndexBuffer(Buffer buffer, IndexFormat format, uint64_t offset, uint64_t size) const {
 	return wgpuRenderBundleEncoderSetIndexBuffer(m_raw, buffer, static_cast<WGPUIndexFormat>(format), offset, size);
 }
-void RenderBundleEncoder::setLabel(char const * label) const {
+void RenderBundleEncoder::setLabel(StringView label) const {
 	return wgpuRenderBundleEncoderSetLabel(m_raw, label);
 }
 void RenderBundleEncoder::setPipeline(RenderPipeline pipeline) const {
@@ -2391,8 +2571,8 @@ void RenderBundleEncoder::setPipeline(RenderPipeline pipeline) const {
 void RenderBundleEncoder::setVertexBuffer(uint32_t slot, Buffer buffer, uint64_t offset, uint64_t size) const {
 	return wgpuRenderBundleEncoderSetVertexBuffer(m_raw, slot, buffer, offset, size);
 }
-void RenderBundleEncoder::reference() const {
-	return wgpuRenderBundleEncoderReference(m_raw);
+void RenderBundleEncoder::addRef() const {
+	return wgpuRenderBundleEncoderAddRef(m_raw);
 }
 void RenderBundleEncoder::release() const {
 	return wgpuRenderBundleEncoderRelease(m_raw);
@@ -2430,13 +2610,13 @@ void RenderPassEncoder::executeBundles(const std::vector<WGPURenderBundle>& bund
 void RenderPassEncoder::executeBundles(const WGPURenderBundle& bundles) const {
 	return wgpuRenderPassEncoderExecuteBundles(m_raw, 1, &bundles);
 }
-void RenderPassEncoder::insertDebugMarker(char const * markerLabel) const {
+void RenderPassEncoder::insertDebugMarker(StringView markerLabel) const {
 	return wgpuRenderPassEncoderInsertDebugMarker(m_raw, markerLabel);
 }
 void RenderPassEncoder::popDebugGroup() const {
 	return wgpuRenderPassEncoderPopDebugGroup(m_raw);
 }
-void RenderPassEncoder::pushDebugGroup(char const * groupLabel) const {
+void RenderPassEncoder::pushDebugGroup(StringView groupLabel) const {
 	return wgpuRenderPassEncoderPushDebugGroup(m_raw, groupLabel);
 }
 void RenderPassEncoder::setBindGroup(uint32_t groupIndex, BindGroup group, size_t dynamicOffsetCount, uint32_t const * dynamicOffsets) const {
@@ -2454,7 +2634,7 @@ void RenderPassEncoder::setBlendConstant(const Color& color) const {
 void RenderPassEncoder::setIndexBuffer(Buffer buffer, IndexFormat format, uint64_t offset, uint64_t size) const {
 	return wgpuRenderPassEncoderSetIndexBuffer(m_raw, buffer, static_cast<WGPUIndexFormat>(format), offset, size);
 }
-void RenderPassEncoder::setLabel(char const * label) const {
+void RenderPassEncoder::setLabel(StringView label) const {
 	return wgpuRenderPassEncoderSetLabel(m_raw, label);
 }
 void RenderPassEncoder::setPipeline(RenderPipeline pipeline) const {
@@ -2472,11 +2652,8 @@ void RenderPassEncoder::setVertexBuffer(uint32_t slot, Buffer buffer, uint64_t o
 void RenderPassEncoder::setViewport(float x, float y, float width, float height, float minDepth, float maxDepth) const {
 	return wgpuRenderPassEncoderSetViewport(m_raw, x, y, width, height, minDepth, maxDepth);
 }
-void RenderPassEncoder::writeTimestamp(QuerySet querySet, uint32_t queryIndex) const {
-	return wgpuRenderPassEncoderWriteTimestamp(m_raw, querySet, queryIndex);
-}
-void RenderPassEncoder::reference() const {
-	return wgpuRenderPassEncoderReference(m_raw);
+void RenderPassEncoder::addRef() const {
+	return wgpuRenderPassEncoderAddRef(m_raw);
 }
 void RenderPassEncoder::release() const {
 	return wgpuRenderPassEncoderRelease(m_raw);
@@ -2487,11 +2664,11 @@ void RenderPassEncoder::release() const {
 BindGroupLayout RenderPipeline::getBindGroupLayout(uint32_t groupIndex) const {
 	return wgpuRenderPipelineGetBindGroupLayout(m_raw, groupIndex);
 }
-void RenderPipeline::setLabel(char const * label) const {
+void RenderPipeline::setLabel(StringView label) const {
 	return wgpuRenderPipelineSetLabel(m_raw, label);
 }
-void RenderPipeline::reference() const {
-	return wgpuRenderPipelineReference(m_raw);
+void RenderPipeline::addRef() const {
+	return wgpuRenderPipelineAddRef(m_raw);
 }
 void RenderPipeline::release() const {
 	return wgpuRenderPipelineRelease(m_raw);
@@ -2499,11 +2676,11 @@ void RenderPipeline::release() const {
 
 
 // Methods of Sampler
-void Sampler::setLabel(char const * label) const {
+void Sampler::setLabel(StringView label) const {
 	return wgpuSamplerSetLabel(m_raw, label);
 }
-void Sampler::reference() const {
-	return wgpuSamplerReference(m_raw);
+void Sampler::addRef() const {
+	return wgpuSamplerAddRef(m_raw);
 }
 void Sampler::release() const {
 	return wgpuSamplerRelease(m_raw);
@@ -2511,20 +2688,11 @@ void Sampler::release() const {
 
 
 // Methods of ShaderModule
-std::unique_ptr<CompilationInfoCallback> ShaderModule::getCompilationInfo(CompilationInfoCallback&& callback) const {
-	auto handle = std::make_unique<CompilationInfoCallback>(callback);
-	static auto cCallback = [](WGPUCompilationInfoRequestStatus status, struct WGPUCompilationInfo const * compilationInfo, void * userdata) -> void {
-		CompilationInfoCallback& callback = *reinterpret_cast<CompilationInfoCallback*>(userdata);
-		callback(static_cast<CompilationInfoRequestStatus>(status), *reinterpret_cast<CompilationInfo const *>(compilationInfo));
-	};
-	wgpuShaderModuleGetCompilationInfo(m_raw, cCallback, reinterpret_cast<void*>(handle.get()));
-	return handle;
-}
-void ShaderModule::setLabel(char const * label) const {
+void ShaderModule::setLabel(StringView label) const {
 	return wgpuShaderModuleSetLabel(m_raw, label);
 }
-void ShaderModule::reference() const {
-	return wgpuShaderModuleReference(m_raw);
+void ShaderModule::addRef() const {
+	return wgpuShaderModuleAddRef(m_raw);
 }
 void ShaderModule::release() const {
 	return wgpuShaderModuleRelease(m_raw);
@@ -2535,44 +2703,26 @@ void ShaderModule::release() const {
 void Surface::configure(const SurfaceConfiguration& config) const {
 	return wgpuSurfaceConfigure(m_raw, &config);
 }
-void Surface::getCapabilities(Adapter adapter, SurfaceCapabilities * capabilities) const {
-	return wgpuSurfaceGetCapabilities(m_raw, adapter, capabilities);
+Status Surface::getCapabilities(Adapter adapter, SurfaceCapabilities * capabilities) const {
+	return static_cast<Status>(wgpuSurfaceGetCapabilities(m_raw, adapter, capabilities));
 }
 void Surface::getCurrentTexture(SurfaceTexture * surfaceTexture) const {
 	return wgpuSurfaceGetCurrentTexture(m_raw, surfaceTexture);
 }
-TextureFormat Surface::getPreferredFormat(Adapter adapter) const {
-	return static_cast<TextureFormat>(wgpuSurfaceGetPreferredFormat(m_raw, adapter));
+Status Surface::present() const {
+	return static_cast<Status>(wgpuSurfacePresent(m_raw));
 }
-void Surface::present() const {
-	return wgpuSurfacePresent(m_raw);
+void Surface::setLabel(StringView label) const {
+	return wgpuSurfaceSetLabel(m_raw, label);
 }
 void Surface::unconfigure() const {
 	return wgpuSurfaceUnconfigure(m_raw);
 }
-void Surface::reference() const {
-	return wgpuSurfaceReference(m_raw);
+void Surface::addRef() const {
+	return wgpuSurfaceAddRef(m_raw);
 }
 void Surface::release() const {
 	return wgpuSurfaceRelease(m_raw);
-}
-
-
-// Methods of SwapChain
-Texture SwapChain::getCurrentTexture() const {
-	return wgpuSwapChainGetCurrentTexture(m_raw);
-}
-TextureView SwapChain::getCurrentTextureView() const {
-	return wgpuSwapChainGetCurrentTextureView(m_raw);
-}
-void SwapChain::present() const {
-	return wgpuSwapChainPresent(m_raw);
-}
-void SwapChain::reference() const {
-	return wgpuSwapChainReference(m_raw);
-}
-void SwapChain::release() const {
-	return wgpuSwapChainRelease(m_raw);
 }
 
 
@@ -2604,17 +2754,17 @@ uint32_t Texture::getMipLevelCount() const {
 uint32_t Texture::getSampleCount() const {
 	return wgpuTextureGetSampleCount(m_raw);
 }
-TextureUsageFlags Texture::getUsage() const {
-	return wgpuTextureGetUsage(m_raw);
+TextureUsage Texture::getUsage() const {
+	return static_cast<TextureUsage>(wgpuTextureGetUsage(m_raw));
 }
 uint32_t Texture::getWidth() const {
 	return wgpuTextureGetWidth(m_raw);
 }
-void Texture::setLabel(char const * label) const {
+void Texture::setLabel(StringView label) const {
 	return wgpuTextureSetLabel(m_raw, label);
 }
-void Texture::reference() const {
-	return wgpuTextureReference(m_raw);
+void Texture::addRef() const {
+	return wgpuTextureAddRef(m_raw);
 }
 void Texture::release() const {
 	return wgpuTextureRelease(m_raw);
@@ -2622,11 +2772,11 @@ void Texture::release() const {
 
 
 // Methods of TextureView
-void TextureView::setLabel(char const * label) const {
+void TextureView::setLabel(StringView label) const {
 	return wgpuTextureViewSetLabel(m_raw, label);
 }
-void TextureView::reference() const {
-	return wgpuTextureViewReference(m_raw);
+void TextureView::addRef() const {
+	return wgpuTextureViewAddRef(m_raw);
 }
 void TextureView::release() const {
 	return wgpuTextureViewRelease(m_raw);

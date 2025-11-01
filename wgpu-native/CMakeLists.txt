@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-set(WGPU_VERSION "v24.0.3.1" CACHE STRING "\
+set(WGPU_VERSION "v27.0.2.0" CACHE STRING "\
 	Version of the wgpu-native WebGPU implementation to use. Must correspond \
 	to the tag name of an existing release on https://github.com/gfx-rs/wgpu-native/releases. \
 	Warning: The webgpu.hpp file provided in include/ may not be compatible with other versions.")

@@ -133,7 +133,6 @@ HANDLE(RenderPipeline);
 HANDLE(Sampler);
 HANDLE(ShaderModule);
 HANDLE(Surface);
-HANDLE(SwapChain);
 HANDLE(Texture);
 HANDLE(TextureView);
 
