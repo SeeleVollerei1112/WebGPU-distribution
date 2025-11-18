@@ -72,10 +72,10 @@ FetchContent_Declare(
 		git fetch --depth=1 ${DAWN_SOURCE_MIRROR} chromium/${DAWN_VERSION} &&
 		git reset --hard FETCH_HEAD
 
-	PATCH_COMMAND
-		cmake
-		"-DPATCH_FILE=${CMAKE_CURRENT_LIST_DIR}/patch/dawn.patch"
-		-P "${PROJECT_SOURCE_DIR}/cmake/apply_patch_idempotent.cmake"
+	#PATCH_COMMAND
+		#cmake
+		#"-DPATCH_FILE=${CMAKE_CURRENT_LIST_DIR}/patch/dawn.patch"
+		#-P "${PROJECT_SOURCE_DIR}/cmake/apply_patch_idempotent.cmake"
 )
 FetchContent_MakeAvailable(dawn)
 
